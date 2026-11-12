@@ -1,4 +1,4 @@
-
+﻿
 import { Link, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -11,8 +11,12 @@ import {
 import {
   getFollowUpsForRequest,
   getSupportRequestById,
+  getSupportRequests,
 } from '../../data/supportRequests'
-import type { SupportRequest } from '../../types/support'
+import type {
+  IndependentSupportCategory,
+  SupportRequest,
+} from '../../types/support'
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('en-ZA', {
@@ -30,9 +34,25 @@ function getRequestLabel(type: SupportRequest['type']) {
       return 'Workplace support'
     case 'independent':
       return 'Independent support'
+    case 'retaliation':
+      return 'Retaliation support'
   }
 }
 
+function getIndependentCategoryLabel(
+  category: IndependentSupportCategory,
+) {
+  const labels: Record<IndependentSupportCategory, string> = {
+    wellbeing: 'Emotional and wellbeing support',
+    'workplace-concerns': 'Workplace concerns',
+    'harassment-discrimination': 'Harassment or discrimination',
+    retaliation: 'Retaliation or victimisation',
+    guidance: 'Guidance and advice',
+    other: 'Other support',
+  }
+
+  return labels[category]
+}
 function getProgress(status: SupportRequest['status']) {
   switch (status) {
     case 'Submitted':
@@ -69,6 +89,17 @@ function SupportRequestDetailsPage() {
   }
 
   const requestFollowUps = getFollowUpsForRequest(request.id)
+
+  const linkedRetaliationRequests = getSupportRequests().filter(
+    (candidate) =>
+      candidate.type === 'retaliation' &&
+      candidate.originalRequestId === request.id,
+  )
+
+  const originalRequest =
+    request.type === 'retaliation' && request.originalRequestId
+      ? getSupportRequestById(request.originalRequestId)
+      : undefined
 
   const currentProgress = getProgress(request.status)
 
@@ -117,6 +148,35 @@ function SupportRequestDetailsPage() {
               <strong>{getRequestLabel(request.type)}</strong>
             </div>
 
+            {request.type === 'independent' && (
+              <>
+                {request.independentSupportCategories &&
+                  request.independentSupportCategories.length > 0 && (
+                    <div className="request-detail-field">
+                      <span>Types of support requested</span>
+                      <ul>
+                        {request.independentSupportCategories.map(
+                          (category) => (
+                            <li key={category}>
+                              {getIndependentCategoryLabel(category)}
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                {request.independentSupportDetails?.trim() && (
+                  <div className="request-detail-field">
+                    <span>Additional details</span>
+                    <p className="request-detail-description">
+                      {request.independentSupportDetails}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="request-detail-field">
               <span>Your description</span>
               <p className="request-detail-description">
@@ -124,6 +184,76 @@ function SupportRequestDetailsPage() {
               </p>
             </div>
           </section>
+
+          {request.type === 'retaliation' ? (
+            originalRequest && (
+              <section className="request-details-card">
+                <h2>Related original request</h2>
+                <p>
+                  This retaliation report is linked to the following
+                  original support request. Its status and history remain
+                  separate.
+                </p>
+                <div className="request-detail-field">
+                  <span>Original request</span>
+                  <strong>{getRequestLabel(originalRequest.type)}</strong>
+                </div>
+                <div className="request-detail-field">
+                  <span>Reference</span>
+                  <strong>{originalRequest.reference}</strong>
+                </div>
+                <div className="request-detail-field">
+                  <span>Current status</span>
+                  <strong>{originalRequest.status}</strong>
+                </div>
+                <Link
+                  to={`/my-support/${originalRequest.id}`}
+                  className="request-primary-link"
+                >
+                  View original request
+                </Link>
+              </section>
+            )
+          ) : (
+            <>
+              <section className="request-details-card">
+                <h2>Retaliation support</h2>
+                <p>
+                  If you experience retaliation connected to this
+                  request, you can submit a separate linked report.
+                  This will not change the original request.
+                </p>
+                <Link
+                  to={`/my-support/${request.id}/retaliation`}
+                  className="request-primary-link"
+                >
+                  Report retaliation related to this request
+                </Link>
+              </section>
+
+              {linkedRetaliationRequests.length > 0 && (
+                <section className="request-details-card">
+                  <h2>Linked retaliation reports</h2>
+                  <p>
+                    These reports are linked to this original request
+                    and have their own references and progress.
+                  </p>
+                  {linkedRetaliationRequests.map((retaliation) => (
+                    <div
+                      className="request-detail-field"
+                      key={retaliation.id}
+                    >
+                      <span>{retaliation.reference}</span>
+                      <strong>{retaliation.status}</strong>
+                      <Link to={`/my-support/${retaliation.id}`}>
+                        View retaliation report
+                      </Link>
+                    </div>
+                  ))}
+                </section>
+              )}
+            </>
+          )}
 
           <section className="request-details-card">
             <h2>Contact preferences</h2>
@@ -251,3 +381,6 @@ function SupportRequestDetailsPage() {
 }
 
 export default SupportRequestDetailsPage
+
+
+

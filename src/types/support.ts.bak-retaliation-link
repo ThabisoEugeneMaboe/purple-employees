@@ -1,0 +1,113 @@
+export type SupportRequestType =
+  | 'emotional'
+  | 'workplace'
+  | 'independent'
+  | 'retaliation'
+
+export type RetaliationRoutePreference =
+  | 'internal'
+  | 'independent'
+  | 'unsure'
+
+export type SupportChannel =
+  | 'Phone call'
+  | 'Email'
+  | 'In-person conversation'
+  | 'Secure message'
+
+export type SupportRequestStatus =
+  | 'Submitted'
+  | 'Acknowledged'
+  | 'In progress'
+  | 'Resolved'
+
+export interface SupportRequest {
+  id: string
+  reference: string
+  type: SupportRequestType
+  retaliationRoutePreference?: RetaliationRoutePreference
+  description: string
+  preferredChannel: SupportChannel
+  preferredLanguage: string
+  preferredContactTime: string
+  safeToContact: boolean
+  safeContactInstructions: string
+  consentConfirmed: boolean
+  status: SupportRequestStatus
+  createdAt: string
+}
+
+export interface SupportRequestDraft {
+  type: SupportRequestType
+  retaliationRoutePreference?: RetaliationRoutePreference
+  description: string
+  preferredChannel: SupportChannel
+  preferredLanguage: string
+  preferredContactTime: string
+  safeToContact: boolean
+  safeContactInstructions: string
+  consentConfirmed: boolean
+}
+
+export type FollowUpType =
+  | 'Acknowledgement'
+  | 'Contact attempt'
+  | 'Progress update'
+  | 'Scheduled conversation'
+  | 'Next step'
+  | 'Resolution'
+
+export type FollowUpStatus = 'Update' | 'Scheduled' | 'Completed'
+
+export interface SupportFollowUp {
+  id: string
+  requestId: string
+  type: FollowUpType
+  status: FollowUpStatus
+  title: string
+  message: string
+  createdAt: string
+  scheduledFor?: string
+}
+/* Internal support case management */
+
+export type AssignmentStatus =
+  | 'Unassigned'
+  | 'Assigned'
+  | 'Accepted'
+  | 'Conflict declared'
+  | 'Reassignment requested'
+
+export type CaseNoteType =
+  | 'Internal note'
+  | 'Conflict declaration'
+  | 'Assignment note'
+
+export interface CaseAssignment {
+  requestId: string
+  responderId: string
+  responderName: string
+  status: AssignmentStatus
+  assignedAt: string
+  assignedBy: string
+  acceptedAt?: string
+  conflictReason?: string
+  reassignmentReason?: string
+}
+
+export interface InternalCaseNote {
+  id: string
+  requestId: string
+  responderId: string
+  responderName: string
+  type: CaseNoteType
+  content: string
+  createdAt: string
+}
+
+export interface SupportResponder {
+  id: string
+  displayName: string
+  role: 'Responder' | 'Coordinator'
+  active: boolean
+}

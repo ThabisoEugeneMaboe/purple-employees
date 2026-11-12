@@ -1,4 +1,4 @@
-
+﻿
 import {
   ArrowLeft,
   ArrowRight,
@@ -15,6 +15,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { submitSupportRequest } from '../../data/supportRequests'
 import type {
+  IndependentSupportCategory,
   SupportChannel,
   SupportRequestDraft,
   SupportRequestType,
@@ -39,6 +40,11 @@ const pathwayDetails: Record<
     description: 'Request assistance outside your workplace reporting structure.',
     icon: ShieldCheck,
   },
+  retaliation: {
+    title: 'Retaliation support',
+    description: 'Seek support if you feel threatened, disadvantaged or treated unfairly for raising a concern or seeking support.',
+    icon: ShieldCheck,
+  },
 }
 
 const channels: SupportChannel[] = [
@@ -60,14 +66,27 @@ const languages = [
 ]
 
 const contactTimes = [
-  'Morning (08:00–12:00)',
-  'Afternoon (12:00–17:00)',
+  'Morning (08:00â€“12:00)',
+  'Afternoon (12:00â€“17:00)',
   'Evening (after 17:00)',
   'Please arrange a suitable time with me',
 ]
 
+const independentSupportOptions: {
+  value: IndependentSupportCategory
+  label: string
+}[] = [
+  { value: 'wellbeing', label: 'Emotional and wellbeing support' },
+  { value: 'workplace-concerns', label: 'Workplace concerns' },
+  { value: 'harassment-discrimination', label: 'Harassment or discrimination' },
+  { value: 'retaliation', label: 'Retaliation or victimisation' },
+  { value: 'guidance', label: 'Guidance and advice' },
+  { value: 'other', label: 'Other support' },
+]
 const initialDraft: SupportRequestDraft = {
   type: 'emotional',
+  independentSupportCategories: [],
+  independentSupportDetails: '',
   description: '',
   preferredChannel: 'Phone call',
   preferredLanguage: 'English',
@@ -81,6 +100,7 @@ function getPathwayType(value: string | undefined): SupportRequestType | null {
   if (value === 'talk') return 'emotional'
   if (value === 'workplace') return 'workplace'
   if (value === 'independent') return 'independent'
+  if (value === 'retaliation') return 'retaliation'
   return null
 }
 
@@ -119,12 +139,28 @@ function SupportRequestPage() {
     setError('')
   }
 
+  function toggleIndependentCategory(category: IndependentSupportCategory) {
+    const current = draft.independentSupportCategories ?? []
+    const updated = current.includes(category)
+      ? current.filter((item) => item !== category)
+      : [...current, category]
+
+    updateDraft('independentSupportCategories', updated)
+  }
   function continueStep() {
     if (step === 1 && !draft.preferredLanguage) {
       setError('Please select your preferred language.')
       return
     }
 
+    if (
+      step === 2 &&
+      requestType === 'independent' &&
+      (draft.independentSupportCategories ?? []).length === 0
+    ) {
+      setError('Please select at least one type of support.')
+      return
+    }
     if (step === 2 && draft.description.trim().length < 10) {
       setError('Please provide a little more information (at least 10 characters).')
       return
@@ -347,6 +383,54 @@ function SupportRequestPage() {
               </p>
             </div>
 
+            {requestType === 'independent' && (
+              <div className="independent-category-section">
+                <h3>What kind of support are you looking for?</h3>
+                <p>
+                  Select all the types of support that you feel would be
+                  helpful. You do not need to identify another person.
+                </p>
+
+                <div className="independent-category-options">
+                  {independentSupportOptions.map((option) => (
+                    <label
+                      className="independent-category-option"
+                      key={option.value}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={(draft.independentSupportCategories ?? []).includes(option.value)}
+                        onChange={() => toggleIndependentCategory(option.value)}
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <label
+                  className="field-label"
+                  htmlFor="independent-support-details"
+                >
+                  Additional details (optional)
+                </label>
+                <textarea
+                  id="independent-support-details"
+                  rows={4}
+                  maxLength={1500}
+                  value={draft.independentSupportDetails ?? ''}
+                  onChange={(event) => updateDraft(
+                    'independentSupportDetails',
+                    event.target.value,
+                  )}
+                  placeholder="Share anything else that may help us understand the support you are looking for..."
+                />
+
+                <p className="independent-category-note">
+                  Selecting a category does not automatically initiate a
+                  formal complaint or investigation.
+                </p>
+              </div>
+            )}
             <label className="field-label" htmlFor="description">
               Your message
             </label>
@@ -391,6 +475,29 @@ function SupportRequestPage() {
                 <span>Support pathway</span>
                 <strong>{pathway.title}</strong>
               </div>
+              {requestType === 'independent' && (
+                <>
+                  <div className="review-message">
+                    <span>Types of support requested</span>
+                    <ul>
+                      {independentSupportOptions
+                        .filter((option) =>
+                          (draft.independentSupportCategories ?? []).includes(option.value)
+                        )
+                        .map((option) => (
+                          <li key={option.value}>{option.label}</li>
+                        ))}
+                    </ul>
+                  </div>
+
+                  {draft.independentSupportDetails?.trim() && (
+                    <div className="review-message">
+                      <span>Additional details</span>
+                      <p>{draft.independentSupportDetails}</p>
+                    </div>
+                  )}
+                </>
+              )}
               <div className="review-row">
                 <span>Contact method</span>
                 <strong>{draft.preferredChannel}</strong>
@@ -405,13 +512,28 @@ function SupportRequestPage() {
               </div>
               <div className="review-row">
                 <span>Safe to contact</span>
-                <strong>{draft.safeToContact ? 'Yes' : 'No — arrange a safe method first'}</strong>
+                <strong>{draft.safeToContact ? 'Yes' : 'No â€” arrange a safe method first'}</strong>
               </div>
               <div className="review-message">
                 <span>Your message</span>
                 <p>{draft.description}</p>
               </div>
             </div>
+
+            {requestType === 'retaliation' && (
+              <div className="reassurance-note">
+                <ShieldCheck size={18} />
+                <p>
+                  <strong>Important safeguard:</strong> A person implicated
+                  in the alleged retaliation should not receive, access or
+                  control this request. An appropriate independent handling
+                  arrangement must be established before the request is
+                  acted upon. This demonstration does not provide an
+                  operational investigation or guarantee protection against
+                  retaliation.
+                </p>
+              </div>
+            )}
 
             <div className="confidentiality-section">
               <h3><ShieldCheck size={18} /> Confidentiality and information sharing</h3>
@@ -492,10 +614,13 @@ function SupportRequestPage() {
 
       <div className="request-demo-note">
         <LockKeyhole size={15} />
-        <span>Prototype demonstration — do not enter real or sensitive personal information.</span>
+        <span>Prototype demonstration â€” do not enter real or sensitive personal information.</span>
       </div>
     </div>
   )
 }
 
 export default SupportRequestPage
+
+
+

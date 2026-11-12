@@ -1,4 +1,4 @@
-
+﻿
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -27,6 +27,8 @@ function getRequestLabel(type: SupportRequest['type']) {
       return 'Workplace support'
     case 'independent':
       return 'Independent support'
+    case 'retaliation':
+      return 'Retaliation support'
   }
 }
 
@@ -137,3 +139,4 @@ function MySupportPage() {
 }
 
 export default MySupportPage
+

@@ -1,6 +1,9 @@
-
-import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+﻿import { useState } from 'react'
+import {
+  Link,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 import {
   ArrowLeft,
   CalendarDays,
@@ -11,12 +14,22 @@ import {
   UserRound,
 } from 'lucide-react'
 import {
+  acceptSupportAssignment,
+  addInternalCaseNote,
   addSupportFollowUp,
+  declareSupportConflict,
+  getCaseAssignment,
   getFollowUpsForRequest,
+  getInternalCaseNotes,
   getSupportRequestById,
+  getSupportResponders,
   updateSupportRequestStatus,
 } from '../../data/supportRequests'
-import type { SupportFollowUp } from '../../types/support'
+import type {
+  CaseAssignment,
+  InternalCaseNote,
+  SupportFollowUp,
+} from '../../types/support'
 
 function formatDate(date: string) {
   return new Date(date).toLocaleString('en-ZA', {
@@ -30,15 +43,52 @@ function formatDate(date: string) {
 
 function InternalSupportRequestPage() {
   const { id } = useParams()
-  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
-  const [request] = useState(() =>
+  const responderId = searchParams.get('responder') ?? ''
+
+  const responders = getSupportResponders()
+  const currentResponder = responders.find(
+    (responder) => responder.id === responderId,
+  )
+
+  const [assignment, setAssignment] = useState<
+    CaseAssignment | undefined
+  >(() => (id ? getCaseAssignment(id) : undefined))
+
+  const isAssignedResponder =
+    Boolean(currentResponder) &&
+    assignment?.responderId === responderId
+
+  const hasAcceptedAssignment =
+    isAssignedResponder && assignment?.status === 'Accepted'
+
+  const [request, setRequest] = useState(() =>
     id ? getSupportRequestById(id) : undefined,
   )
 
   const [followUps, setFollowUps] = useState<SupportFollowUp[]>(() =>
     id ? getFollowUpsForRequest(id) : [],
   )
+
+  const [caseNotes, setCaseNotes] = useState<InternalCaseNote[]>(() => {
+  if (!id || !hasAcceptedAssignment || !responderId) {
+    return []
+  }
+
+  try {
+    return getInternalCaseNotes(id, responderId)
+  } catch {
+      return []
+  }
+  })
+
+  const [noteDraft, setNoteDraft] = useState('')
+  const [progressTitle, setProgressTitle] = useState('')
+  const [progressMessage, setProgressMessage] = useState('')
+  const [scheduledFor, setScheduledFor] = useState('')
+  const [conflictReason, setConflictReason] = useState('')
+  const [resolutionMessage, setResolutionMessage] = useState('')
 
   const [acknowledging, setAcknowledging] = useState(false)
   const [error, setError] = useState('')
@@ -63,8 +113,84 @@ function InternalSupportRequestPage() {
     )
   }
 
-  const handleAcknowledge = () => {
-    if (acknowledging || request.status !== 'Submitted') {
+  const handleAcceptAssignment = () => {
+  if (
+    !id ||
+    !responderId ||
+    !isAssignedResponder ||
+    assignment?.status !== 'Assigned'
+  ) {
+    setError('You are not authorised to accept this assignment.')
+    return
+  }
+
+  setError('')
+
+  try {
+    const acceptedAssignment = acceptSupportAssignment(
+      id,
+      responderId,
+    )
+
+    setAssignment(acceptedAssignment)
+
+    const notes = getInternalCaseNotes(id, responderId)
+    setCaseNotes(notes)
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : 'The assignment could not be accepted.',
+    )
+  }
+}
+
+const handleDeclareConflict = () => {
+  if (
+    !id ||
+    !responderId ||
+    !hasAcceptedAssignment
+  ) {
+    setError('You are not authorised to declare a conflict.')
+    return
+  }
+
+  if (!conflictReason.trim()) {
+    setError('Please explain why you cannot handle this case.')
+    return
+  }
+
+  setError('')
+
+  try {
+    const updatedAssignment = declareSupportConflict(
+      id,
+      responderId,
+      conflictReason,
+    )
+
+    setAssignment(updatedAssignment)
+    setCaseNotes([])
+    setConflictReason('')
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : 'The conflict could not be recorded.',
+    )
+  }
+}
+
+    const handleAcknowledge = () => {
+    if (
+      acknowledging ||
+      request.status !== 'Submitted' ||
+      !hasAcceptedAssignment ||
+      !id
+    ) {
+      setError(
+        'Only the responder who has accepted this assignment may acknowledge it.',
+      )
       return
     }
 
@@ -87,25 +213,203 @@ function InternalSupportRequestPage() {
         status: 'Update',
         title: 'Your support request has been acknowledged',
         message:
-          'Your request has been received and acknowledged by the support team. An authorised responder will review the next steps and contact you according to your stated preferences.',
+          'Your request has been received and acknowledged by the support team. An authorised responder is reviewing the next steps and will follow the safe-contact arrangements you provided.',
         createdAt: new Date().toISOString(),
       })
 
+      setRequest(updatedRequest)
       setFollowUps((current) => [newFollowUp, ...current])
-      setAcknowledging(false)
-      navigate('/internal-support', { replace: true })
-    } catch {
+    } catch (error) {
       setError(
-        'We could not acknowledge this request. Please try again.',
+        error instanceof Error
+          ? error.message
+          : 'We could not acknowledge this request. Please try again.',
       )
+    } finally {
       setAcknowledging(false)
     }
   }
 
-  const requestType =
-    request.type === 'emotional'
-      ? 'Emotional support'
-      : 'Workplace support'
+  const handleAddProgressUpdate = () => {
+    if (!id || !hasAcceptedAssignment) {
+      setError('You must accept this assignment before adding an update.')
+      return
+    }
+
+    if (!progressTitle.trim() || !progressMessage.trim()) {
+      setError('Please provide both an update title and message.')
+      return
+    }
+
+    if (!request || request.status === 'Resolved') {
+      setError('A resolved request cannot receive further progress updates.')
+      return
+    }
+
+    setError('')
+
+    try {
+      const newFollowUp = addSupportFollowUp({
+        requestId: id,
+        type: 'Progress update',
+        status: 'Update',
+        title: progressTitle.trim(),
+        message: progressMessage.trim(),
+        createdAt: new Date().toISOString(),
+      })
+
+      if (request.status !== 'In progress') {
+        const updatedRequest = updateSupportRequestStatus(
+          id,
+          'In progress',
+        )
+
+        if (!updatedRequest) {
+          throw new Error('The request status could not be updated.')
+        }
+
+        setRequest(updatedRequest)
+      }
+
+      setFollowUps((current) => [newFollowUp, ...current])
+      setProgressTitle('')
+      setProgressMessage('')
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'The progress update could not be saved.',
+      )
+    }
+  }
+
+  const handleScheduleConversation = () => {
+    if (!id || !hasAcceptedAssignment) {
+      setError('You must accept this assignment before scheduling a conversation.')
+      return
+    }
+
+    if (!scheduledFor) {
+      setError('Please select a date and time for the conversation.')
+      return
+    }
+
+    const scheduledDate = new Date(scheduledFor)
+
+    if (
+      Number.isNaN(scheduledDate.getTime()) ||
+      scheduledDate.getTime() <= Date.now()
+    ) {
+      setError('Please select a valid future date and time.')
+      return
+    }
+
+    setError('')
+
+    try {
+      const newFollowUp = addSupportFollowUp({
+        requestId: id,
+        type: 'Scheduled conversation',
+        status: 'Scheduled',
+        title: 'A support conversation has been scheduled',
+        message:
+          'A conversation has been scheduled for the date and time shown below. Please refer to your stated contact preferences and safe-contact arrangements.',
+        createdAt: new Date().toISOString(),
+        scheduledFor: scheduledDate.toISOString(),
+      })
+
+      setFollowUps((current) => [newFollowUp, ...current])
+      setScheduledFor('')
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'The conversation could not be scheduled.',
+      )
+    }
+  }
+
+  const handleAddPrivateNote = () => {
+    if (!id || !responderId || !hasAcceptedAssignment) {
+      setError('Only the accepted responder may add private case notes.')
+      return
+    }
+
+    if (!noteDraft.trim()) {
+      setError('Please enter a note before saving.')
+      return
+    }
+
+    setError('')
+
+    try {
+      const newNote = addInternalCaseNote({
+        requestId: id,
+        responderId,
+        type: 'Internal note',
+        content: noteDraft.trim(),
+      })
+
+      setCaseNotes((current) => [newNote, ...current])
+      setNoteDraft('')
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'The private note could not be saved.',
+      )
+    }
+  }
+
+  const handleResolveCase = () => {
+    if (!id || !hasAcceptedAssignment || request.status === 'Resolved') {
+      setError('Only the accepted responder may resolve this case.')
+      return
+    }
+
+    if (!resolutionMessage.trim()) {
+      setError('Please provide a resolution summary.')
+      return
+    }
+
+    setError('')
+
+    try {
+      const updatedRequest = updateSupportRequestStatus(
+        id,
+        'Resolved',
+      )
+
+      if (!updatedRequest) {
+        throw new Error('The support request could not be updated.')
+      }
+
+      const newFollowUp = addSupportFollowUp({
+        requestId: id,
+        type: 'Resolution',
+        status: 'Completed',
+        title: 'Your support request has been marked as resolved',
+        message: resolutionMessage.trim(),
+        createdAt: new Date().toISOString(),
+      })
+
+      setRequest(updatedRequest)
+      setFollowUps((current) => [newFollowUp, ...current])
+      setResolutionMessage('')
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'The support case could not be resolved.',
+      )
+    }
+  }
+  const requestType = {
+  emotional: 'Emotional support',
+  workplace: 'Workplace support',
+  independent: 'Independent support',
+  retaliation: 'Retaliation support',
+  }[request.type]
 
   return (
     <div className="dashboard internal-support-page">
@@ -244,6 +548,12 @@ function InternalSupportRequestPage() {
                     <div>
                       <strong>{followUp.title}</strong>
                       <p>{followUp.message}</p>
+                      {followUp.scheduledFor && (
+                        <p>
+                          <strong>Scheduled for:</strong>{' '}
+                          {formatDate(followUp.scheduledFor)}
+                        </p>
+                      )}
                       <span>{formatDate(followUp.createdAt)}</span>
                     </div>
                   </article>
@@ -251,46 +561,316 @@ function InternalSupportRequestPage() {
               </div>
             )}
           </section>
+
+          {hasAcceptedAssignment && request.status !== 'Resolved' && (
+          <>
+            <section className="panel internal-request-detail-card">
+              <div className="panel-heading">
+                <div>
+                  <h2>Record a progress update</h2>
+                  <p>
+                    Share an appropriate update with the employee.
+                  </p>
+                </div>
+                <MessageCircle size={20} />
+              </div>
+
+              <div className="internal-request-description-section">
+                <label htmlFor="progress-title">Update title</label>
+                <input
+                  id="progress-title"
+                  type="text"
+                  value={progressTitle}
+                  onChange={(event) => setProgressTitle(event.target.value)}
+                  placeholder="e.g. Your request is being reviewed"
+                />
+
+                <label htmlFor="progress-message">Update message</label>
+                <textarea
+                  id="progress-message"
+                  value={progressMessage}
+                  onChange={(event) => setProgressMessage(event.target.value)}
+                  placeholder="Write the message the employee will see..."
+                  rows={5}
+                />
+
+                <button
+                  type="button"
+                  className="internal-request-acknowledge-button"
+                  onClick={handleAddProgressUpdate}
+                >
+                  Publish progress update
+                </button>
+              </div>
+            </section>
+
+            <section className="panel internal-request-detail-card">
+              <div className="panel-heading">
+                <div>
+                  <h2>Schedule a conversation</h2>
+                  <p>
+                    Record a proposed conversation date and time.
+                  </p>
+                </div>
+                <CalendarDays size={20} />
+              </div>
+
+              <div className="internal-request-description-section">
+                <label htmlFor="scheduled-for">Conversation date and time</label>
+                <input
+                  id="scheduled-for"
+                  type="datetime-local"
+                  value={scheduledFor}
+                  onChange={(event) => setScheduledFor(event.target.value)}
+                  min={new Date(Date.now() + 60000)
+                    .toISOString()
+                    .slice(0, 16)}
+                />
+
+                <button
+                  type="button"
+                  className="internal-request-acknowledge-button"
+                  onClick={handleScheduleConversation}
+                >
+                  Record scheduled conversation
+                </button>
+
+                <p>
+                  This records the proposed arrangement in the employee's
+                  follow-up timeline. It does not send an invitation or
+                  automatically contact the employee.
+                </p>
+              </div>
+            </section>
+          </>
+        )}
+        {hasAcceptedAssignment && (
+          <section className="panel internal-request-detail-card">
+            <div className="panel-heading">
+              <div>
+                <h2>Private case notes</h2>
+                <p>
+                  These notes are restricted to the responder who accepted
+                  this assignment. They are not visible to the employee.
+                </p>
+              </div>
+              <ShieldCheck size={20} />
+            </div>
+
+            <div className="internal-request-description-section">
+              <label htmlFor="private-note">Internal note</label>
+              <textarea
+                id="private-note"
+                value={noteDraft}
+                onChange={(event) => setNoteDraft(event.target.value)}
+                placeholder="Record relevant observations, actions or internal context..."
+                rows={5}
+              />
+
+              <button
+                type="button"
+                className="internal-request-acknowledge-button"
+                onClick={handleAddPrivateNote}
+              >
+                Save private note
+              </button>
+            </div>
+
+            <div className="internal-request-timeline-list">
+              {caseNotes.length === 0 ? (
+                <div className="internal-request-no-updates">
+                  <ShieldCheck size={20} />
+                  <p>No private notes have been recorded.</p>
+                </div>
+              ) : (
+                caseNotes.map((note) => (
+                  <article key={note.id}>
+                    <div className="internal-request-timeline-icon">
+                      <ShieldCheck size={17} />
+                    </div>
+                    <div>
+                      <strong>{note.type}</strong>
+                      <p>{note.content}</p>
+                      <span>{formatDate(note.createdAt)}</span>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        )}
+
+
+        {hasAcceptedAssignment && request.status !== 'Resolved' && (
+  <section className="panel internal-request-detail-card">
+    <div className="panel-heading">
+      <div>
+        <h2>Resolve support case</h2>
+        <p>
+          Record the outcome and provide an appropriate summary
+          for the employee.
+        </p>
+      </div>
+      <CheckCircle2 size={20} />
+    </div>
+
+    <div className="internal-request-description-section">
+      <label htmlFor="resolution-message">
+        Resolution summary
+      </label>
+
+      <textarea
+        id="resolution-message"
+        value={resolutionMessage}
+        onChange={(event) =>
+          setResolutionMessage(event.target.value)
+        }
+        placeholder="Summarise the outcome or agreed next steps..."
+        rows={5}
+      />
+
+      <button
+        type="button"
+        className="internal-request-acknowledge-button"
+        onClick={handleResolveCase}
+      >
+        Mark case as resolved
+      </button>
+
+      <p>
+        Only resolve a case when the support process has reached
+        an appropriate conclusion. The summary will be visible
+        to the employee.
+      </p>
+    </div>
+  </section>
+)}
         </div>
 
         <aside className="internal-request-sidebar">
-          <section className="panel internal-request-action-card">
+         <section className="panel internal-request-action-card">
             <h2>Case actions</h2>
 
-            {request.status === 'Submitted' ? (
+            {!currentResponder ? (
+              <p>
+                No valid responder identity was provided. Return to the
+                support workspace and open the case from your responder queue.
+              </p>
+            ) : !isAssignedResponder ? (
+              <p>
+                This case is not currently assigned to you. You cannot
+                perform case actions.
+              </p>
+            ) : assignment?.status === 'Conflict declared' ? (
+              <div className="internal-request-acknowledged">
+                <ShieldCheck size={21} />
+                <strong>Conflict declared</strong>
+                <p>
+                  This case has been returned to the coordinator for reassignment.
+                </p>
+              </div>
+            ) : assignment?.status === 'Reassignment requested' ? (
+              <p>This case is awaiting reassignment.</p>
+            ) : assignment?.status === 'Assigned' ? (
               <>
                 <p>
-                  Acknowledge receipt of this request so the employee
-                  knows it has reached the support team.
+                  This case has been assigned to you. Accept the assignment
+                  before accessing private notes or taking case actions.
                 </p>
 
                 <button
                   type="button"
                   className="internal-request-acknowledge-button"
-                  onClick={handleAcknowledge}
-                  disabled={acknowledging}
+                  onClick={handleAcceptAssignment}
                 >
                   <CheckCircle2 size={17} />
-                  {acknowledging
-                    ? 'Acknowledging...'
-                    : 'Acknowledge request'}
+                  Accept assignment
                 </button>
+              </>
+            ) : hasAcceptedAssignment ? (
+              <>
+                {request.status === 'Submitted' && (
+                  <>
+                    <p>
+                      You have accepted this assignment. You can now
+                      acknowledge receipt of the employee's request.
+                    </p>
 
-                {error && (
-                  <p className="internal-request-error" role="alert">
-                    {error}
-                  </p>
+                    <button
+                      type="button"
+                      className="internal-request-acknowledge-button"
+                      onClick={handleAcknowledge}
+                      disabled={acknowledging}
+                    >
+                      <CheckCircle2 size={17} />
+                      {acknowledging
+                        ? 'Acknowledging...'
+                        : 'Acknowledge request'}
+                    </button>
+                  </>
+                )}
+
+                {request.status === 'Acknowledged' && (
+                  <div className="internal-request-acknowledged">
+                    <CheckCircle2 size={21} />
+                    <strong>Request acknowledged</strong>
+                    <p>You are the accepted responder for this case.</p>
+                  </div>
+                )}
+
+                {request.status === 'In progress' && (
+                  <div className="internal-request-acknowledged">
+                    <Clock3 size={21} />
+                    <strong>Case in progress</strong>
+                    <p>You are managing this support request.</p>
+                  </div>
+                )}
+
+                {request.status === 'Resolved' && (
+                  <div className="internal-request-acknowledged">
+                    <CheckCircle2 size={21} />
+                    <strong>Case resolved</strong>
+                    <p>A resolution update has been recorded.</p>
+                  </div>
+                )}
+
+                {request.status !== 'Resolved' && (
+                  <>
+                    <div className="internal-request-description-section internal-request-conflict-section">
+                      <h3>Declare a conflict</h3>
+                      <p>
+                        If you cannot handle this case impartially or
+                        appropriately, explain why so it can be reassigned.
+                      </p>
+                    </div>
+
+                    <textarea
+                      value={conflictReason}
+                      onChange={(event) => setConflictReason(event.target.value)}
+                      placeholder="Explain the conflict of interest or other concern..."
+                      rows={4}
+                    />
+
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={handleDeclareConflict}
+                    >
+                      Declare conflict
+                    </button>
+                  </>
                 )}
               </>
             ) : (
-              <div className="internal-request-acknowledged">
-                <CheckCircle2 size={21} />
-                <strong>Request acknowledged</strong>
-                <p>
-                  This request has already moved beyond its initial
-                  submission.
-                </p>
-              </div>
+              <p>
+                This assignment is not currently available for action.
+              </p>
+            )}
+
+            {error && (
+              <p className="internal-request-error" role="alert">
+                {error}
+              </p>
             )}
           </section>
 
@@ -300,7 +880,15 @@ function InternalSupportRequestPage() {
             <div>
               <UserRound size={17} />
               <span>Assigned responder</span>
-              <strong>Not yet assigned</strong>
+              <strong>
+                {assignment?.responderName ?? 'Not yet assigned'}
+              </strong>
+            </div>
+
+            <div>
+              <ShieldCheck size={17} />
+              <span>Assignment status</span>
+              <strong>{assignment?.status ?? 'Unassigned'}</strong>
             </div>
 
             <div>
@@ -322,3 +910,7 @@ function InternalSupportRequestPage() {
 }
 
 export default InternalSupportRequestPage
+
+
+
+

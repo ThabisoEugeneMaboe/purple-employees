@@ -9,7 +9,6 @@ import {
   ClipboardList,
   Heart,
   Home,
-  LifeBuoy,
   Menu,
   MessageCircle,
   ShieldCheck,
@@ -19,8 +18,10 @@ import {
 import { useState } from 'react'
 import InternalSupportPage from './pages/internal-support/InternalSupportPage'
 import SupportRequestDetailsPage from './pages/employee/SupportRequestDetailsPage'
+import RetaliationRequestPage from './pages/employee/RetaliationRequestPage'
 import InternalSupportRequestPage from './pages/internal-support/InternalSupportRequestPage'
 import {
+  Navigate,
   NavLink,
   Route,
   Routes,
@@ -234,25 +235,21 @@ function PageHeading({
 }
 
 function SupportCard({
-  icon: Icon,
+  image,
   title,
   description,
   label,
-  tone,
   onClick,
 }: {
-  icon: typeof Heart
+  image: string
   title: string
   description: string
   label: string
-  tone: string
   onClick: () => void
 }) {
   return (
     <button className="support-card" onClick={onClick}>
-      <div className={`support-icon ${tone}`}>
-        <Icon size={22} strokeWidth={1.8} />
-      </div>
+      <img className="support-card-image" src={image} alt="" />
       <div className="support-card-content">
         <h3>{title}</h3>
         <p>{description}</p>
@@ -260,7 +257,6 @@ function SupportCard({
           {label} <ArrowRight size={15} />
         </span>
       </div>
-      <ChevronRight className="support-card-chevron" size={19} />
     </button>
   )
 }
@@ -318,41 +314,45 @@ function HomePage() {
 
         <div className="support-grid">
           <SupportCard
-            icon={Heart}
+            image="/images/happy-one.jpg"
             title="I'm doing okay"
             description="Check in with yourself and explore wellbeing resources."
             label="Explore wellbeing"
-            tone="purple"
             onClick={() => navigate('/follow-ups')}
           />
 
           <SupportCard
-            icon={MessageCircle}
+            image="/images/not-okay.jpg"
             title="I'd like someone to talk to"
             description="Reach out for a conversation, guidance or emotional support."
             label="Request support"
-            tone="blue"
             onClick={() => navigate('/request/talk')}
           />
 
           <SupportCard
-            icon={LifeBuoy}
+            image="/images/concerned.jpg"
             title="Something at work is affecting me"
             description="Talk about a workplace situation that's causing distress or concern."
             label="Find workplace support"
-            tone="amber"
             onClick={() => navigate('/request/workplace')}
           />
 
           <SupportCard
-            icon={ShieldCheck}
+            image="/images/independent-support-1.jpg"
             title="I need independent support"
             description="Connect with support outside your workplace reporting structure."
             label="Explore independent support"
-            tone="green"
             onClick={() => navigate('/request/independent')}
           />
         </div>
+
+        <SupportCard
+          image="/images/retaliation.jpg"
+          title="I'm experiencing retaliation"
+          description="Seek support if you feel threatened or treated unfairly for raising a concern or speaking up."
+          label="Request retaliation support"
+          onClick={() => navigate('/my-support')}
+        />
       </section>
 
       <section className="lower-grid">
@@ -488,12 +488,14 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/my-support" element={<MySupportPage />} />
+            <Route path="/my-support/:id/retaliation" element={<RetaliationRequestPage />} />
             <Route path="/my-support/:id" element={<SupportRequestDetailsPage />}/>
             <Route path="/internal-support/:id" element={<InternalSupportRequestPage />}/>
             <Route path="/follow-ups" element={<MyFollowUpsPage />} />
             <Route path="/internal-support" element={<InternalSupportPage />}/>
             <Route path="/external-support" element={<PlaceholderPage title="Independent support" />} />
             <Route path="/admin" element={<PlaceholderPage title="Administration" />} />
+            <Route path="/request/retaliation" element={<Navigate to="/my-support" replace />} />
             <Route path="/request/:type" element={<SupportRequestPage />} />
             <Route path="*" element={<HomePage />} />
           </Routes>
