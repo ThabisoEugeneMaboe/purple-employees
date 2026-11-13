@@ -79,6 +79,7 @@ const pageTitles: Record<string, string> = {
   '/': 'Home',
   '/my-support': 'My support',
   '/follow-ups': 'My follow-ups',
+  '/im-okay': 'Wellbeing check-in',
   '/internal-support': 'Internal support',
   '/external-support': 'Independent support',
   '/admin': 'Administration',
@@ -105,7 +106,7 @@ function Sidebar({
           <div className="sidebar-logo-wrapper">
             <img
               src="/images/logo.jpeg"
-              alt="MIVALI Employees"
+              alt="PURPLE Employees"
               className="sidebar-logo"
             />
             <span className="sidebar-trademark">TM</span>
@@ -145,7 +146,7 @@ function Sidebar({
 
           <div className="sidebar-footer">
             <span className="footer-dot" />
-            MIVALI Support Platform
+            PURPLE Support Platform
             <span className="version">DEMO</span>
           </div>
         </div>
@@ -314,15 +315,15 @@ function HomePage() {
 
         <div className="support-grid">
           <SupportCard
-            image="/images/happy-one.jpg"
+            image="/images/1_im_okay.png"
             title="I'm doing okay"
             description="Check in with yourself and explore wellbeing resources."
             label="Explore wellbeing"
-            onClick={() => navigate('/follow-ups')}
+            onClick={() => navigate('/im-okay')}
           />
 
           <SupportCard
-            image="/images/not-okay.jpg"
+            image="/images/2_talk_to_someone.png"
             title="I'd like someone to talk to"
             description="Reach out for a conversation, guidance or emotional support."
             label="Request support"
@@ -330,7 +331,7 @@ function HomePage() {
           />
 
           <SupportCard
-            image="/images/concerned.jpg"
+            image="/images/3_affecting_me_at_work.png"
             title="Something at work is affecting me"
             description="Talk about a workplace situation that's causing distress or concern."
             label="Find workplace support"
@@ -338,21 +339,20 @@ function HomePage() {
           />
 
           <SupportCard
-            image="/images/independent-support-1.jpg"
+            image="/images/4_independent_support.png"
             title="I need independent support"
             description="Connect with support outside your workplace reporting structure."
             label="Explore independent support"
             onClick={() => navigate('/request/independent')}
           />
-        </div>
-
         <SupportCard
-          image="/images/retaliation.jpg"
+          image="/images/5_retaliation.png"
           title="I'm experiencing retaliation"
           description="Seek support if you feel threatened or treated unfairly for raising a concern or speaking up."
           label="Request retaliation support"
           onClick={() => navigate('/my-support')}
         />
+        </div>
       </section>
 
       <section className="lower-grid">
@@ -422,7 +422,7 @@ function HomePage() {
 
       <div className="dashboard-footer">
         <ShieldCheck size={15} />
-        <span>Confidentiality, dignity and your wellbeing are central to MIVALI.</span>
+        <span>Confidentiality, dignity and your wellbeing are central to PURPLE.</span>
       </div>
     </div>
   )
@@ -436,9 +436,9 @@ function PlaceholderPage({
   return (
     <div className="dashboard">
       <PageHeading
-        eyebrow="MIVALI WORKSPACE"
+        eyebrow="PURPLE WORKSPACE"
         title={title}
-        description="This workspace is being prepared as part of the MIVALI Employees prototype."
+        description="This workspace is being prepared as part of the PURPLE Employees prototype."
       />
       <div className="panel placeholder-panel">
         <div className="placeholder-icon"><Heart size={25} /></div>
@@ -455,6 +455,35 @@ function PlaceholderPage({
   )
 }
 
+function OkayConfirmationPage() {
+  return (
+    <div className="dashboard">
+      <PageHeading
+        eyebrow="YOUR WELLBEING MATTERS"
+        title="Your check-in has been recorded"
+        description="Thank you for checking in with PURPLE. We're glad you're doing okay."
+      />
+
+      <div className="panel placeholder-panel">
+        <div className="placeholder-icon">
+          <CheckCircle2 size={25} />
+        </div>
+
+        <h2>Thank you for checking in</h2>
+
+        <p>
+          Your "I'm doing okay" selection has been recorded for this
+          demonstration. You can return to your Employee Workspace
+          whenever you need support.
+        </p>
+
+        <NavLink to="/" className="panel-link">
+          Return to Employee Workspace <ArrowRight size={15} />
+        </NavLink>
+      </div>
+    </div>
+  )
+}
 function App() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -487,6 +516,7 @@ function App() {
 
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/im-okay" element={<OkayConfirmationPage />} />
             <Route path="/my-support" element={<MySupportPage />} />
             <Route path="/my-support/:id/retaliation" element={<RetaliationRequestPage />} />
             <Route path="/my-support/:id" element={<SupportRequestDetailsPage />}/>
@@ -507,3 +537,7 @@ function App() {
 }
 
 export default App
+
+
+
+

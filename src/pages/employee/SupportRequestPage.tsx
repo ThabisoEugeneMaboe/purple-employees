@@ -1,4 +1,4 @@
-﻿
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -66,8 +66,8 @@ const languages = [
 ]
 
 const contactTimes = [
-  'Morning (08:00â€“12:00)',
-  'Afternoon (12:00â€“17:00)',
+  'Morning (08:00–12:00)',
+  'Afternoon (12:00–17:00)',
   'Evening (after 17:00)',
   'Please arrange a suitable time with me',
 ]
@@ -512,7 +512,7 @@ function SupportRequestPage() {
               </div>
               <div className="review-row">
                 <span>Safe to contact</span>
-                <strong>{draft.safeToContact ? 'Yes' : 'No â€” arrange a safe method first'}</strong>
+                <strong>{draft.safeToContact ? 'Yes' : 'No — arrange a safe method first'}</strong>
               </div>
               <div className="review-message">
                 <span>Your message</span>
@@ -614,7 +614,7 @@ function SupportRequestPage() {
 
       <div className="request-demo-note">
         <LockKeyhole size={15} />
-        <span>Prototype demonstration â€” do not enter real or sensitive personal information.</span>
+        <span>Prototype demonstration — do not enter real or sensitive personal information.</span>
       </div>
     </div>
   )

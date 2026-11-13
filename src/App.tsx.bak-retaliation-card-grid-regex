@@ -1,0 +1,511 @@
+﻿
+import {
+  ArrowRight,
+  BookOpen,
+  BriefcaseBusiness,
+  CheckCircle2,
+  ChevronRight,
+  CircleHelp,
+  ClipboardList,
+  Heart,
+  Home,
+  Menu,
+  MessageCircle,
+  ShieldCheck,
+  Users,
+  X,
+} from 'lucide-react'
+import { useState } from 'react'
+import InternalSupportPage from './pages/internal-support/InternalSupportPage'
+import SupportRequestDetailsPage from './pages/employee/SupportRequestDetailsPage'
+import RetaliationRequestPage from './pages/employee/RetaliationRequestPage'
+import InternalSupportRequestPage from './pages/internal-support/InternalSupportRequestPage'
+import {
+  Navigate,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
+import SupportRequestPage from './pages/employee/SupportRequestPage'
+import MySupportPage from './pages/employee/MySupportPage'
+import MyFollowUpsPage from './pages/employee/MyFollowUpsPage'
+import { getSupportRequests } from './data/supportRequests'
+
+
+type WorkspaceRole = 'Employee' | 'Internal Support' | 'Administration'
+
+const navigationByRole = {
+  Employee: [
+    {
+      title: 'WORKSPACE',
+      items: [
+        { label: 'Home', icon: Home, path: '/' },
+        { label: 'My support', icon: MessageCircle, path: '/my-support' },
+        { label: 'My follow-ups', icon: ClipboardList, path: '/follow-ups' },
+      ],
+    },
+  ],
+
+  'Internal Support': [
+    {
+      title: 'SUPPORT WORKSPACE',
+      items: [
+        {
+          label: 'Internal support',
+          icon: Users,
+          path: '/internal-support',
+        },
+      ],
+    },
+  ],
+
+  Administration: [
+    {
+      title: 'MANAGEMENT',
+      items: [
+        {
+          label: 'Administration',
+          icon: BriefcaseBusiness,
+          path: '/admin',
+        },
+      ],
+    },
+  ],
+}
+
+const pageTitles: Record<string, string> = {
+  '/': 'Home',
+  '/my-support': 'My support',
+  '/follow-ups': 'My follow-ups',
+  '/internal-support': 'Internal support',
+  '/external-support': 'Independent support',
+  '/admin': 'Administration',
+}
+
+function Sidebar({
+  open,
+  onClose,
+  supportRequestCount,
+  role,
+}: {
+  open: boolean
+  onClose: () => void
+  supportRequestCount: number
+  role: WorkspaceRole
+}) {
+  const navigation = navigationByRole[role]
+  return (
+    <>
+      {open && <div className="sidebar-overlay" onClick={onClose} />}
+
+      <aside className={`sidebar ${open ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-brand">
+          <div className="sidebar-logo-wrapper">
+            <img
+              src="/images/logo.jpeg"
+              alt="MIVALI Employees"
+              className="sidebar-logo"
+            />
+            <span className="sidebar-trademark">TM</span>
+          </div>
+        </div>
+
+        <div className="workspace-label">YOUR WORKSPACE</div>
+
+        <nav className="sidebar-navigation">
+          {navigation.map((group) => (
+            <div className="nav-group" key={group.title}>
+              <div className="nav-group-title">{group.title}</div>
+
+              {group.items.map(({ label, icon: Icon, path }) => (
+                <NavLink
+                  key={path}
+                  to={path}
+                  end={path === '/'}
+                  className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                  onClick={onClose}
+                >
+                  <Icon size={18} strokeWidth={1.8} />
+                  <span>{label}</span>
+                  {path === '/my-support' && supportRequestCount > 0 && (
+                    <span className="nav-indicator">{supportRequestCount}</span>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <div className="sidebar-bottom">
+          <div className="sidebar-company">
+            Young Tech Giants
+          </div>
+
+          <div className="sidebar-footer">
+            <span className="footer-dot" />
+            MIVALI Support Platform
+            <span className="version">DEMO</span>
+          </div>
+        </div>
+      </aside>
+    </>
+  )
+}
+
+
+function Topbar({
+  title,
+  onMenuClick,
+  role,
+  onRoleChange,
+}: {
+  title: string
+  onMenuClick: () => void
+  role: WorkspaceRole
+  onRoleChange: (role: WorkspaceRole) => void
+}) {
+  return (
+    <header className="topbar">
+      <div className="topbar-left">
+        <button
+          className="menu-button"
+          onClick={onMenuClick}
+          aria-label="Open navigation"
+        >
+          <Menu size={21} />
+        </button>
+
+        <div className="breadcrumb">
+          <span>Workspace</span>
+          <ChevronRight size={14} />
+          <strong>{title}</strong>
+        </div>
+      </div>
+
+      <div className="topbar-right">
+        <div className="role-switcher-wrapper">
+          <span className="role-switcher-label">DEMO ROLE</span>
+
+          <select
+            className="role-switcher"
+            value={role}
+            onChange={(event) =>
+              onRoleChange(event.target.value as WorkspaceRole)
+            }
+            aria-label="Switch demonstration workspace"
+          >
+            <option value="Employee">Employee</option>
+            <option value="Internal Support">Internal Support</option>
+            <option value="Administration">Administration</option>
+          </select>
+        </div>
+
+        <div className="profile">
+          <div className="avatar">NM</div>
+
+          <div className="profile-info">
+            <strong>Naledi Mokoena</strong>
+            <span>{role}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+
+function PageHeading({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string
+  title: string
+  description: string
+}) {
+  return (
+    <div className="page-heading">
+      <div className="eyebrow">{eyebrow}</div>
+      <h1>{title}</h1>
+      <p>{description}</p>
+    </div>
+  )
+}
+
+function SupportCard({
+  image,
+  title,
+  description,
+  label,
+  onClick,
+}: {
+  image: string
+  title: string
+  description: string
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button className="support-card" onClick={onClick}>
+      <img className="support-card-image" src={image} alt="" />
+      <div className="support-card-content">
+        <h3>{title}</h3>
+        <p>{description}</p>
+        <span className="support-card-link">
+          {label} <ArrowRight size={15} />
+        </span>
+      </div>
+    </button>
+  )
+}
+
+function HomePage() {
+  const [showNotice, setShowNotice] = useState(true)
+  const navigate = useNavigate()
+
+  const requests = getSupportRequests()
+
+  const pendingAcknowledgementCount = requests.filter(
+  (request) => request.status === 'Submitted',
+  ).length
+
+  return (
+    <div className="dashboard">
+      <div className="welcome-banner">
+        <PageHeading
+          eyebrow="YOUR WELLBEING MATTERS"
+          title="Hello, Naledi."
+          description="Whatever you're experiencing, you don't have to navigate it alone."
+        />
+      </div>
+
+      {showNotice && (
+        <div className="privacy-banner">
+          <div className="privacy-banner-icon">
+            <ShieldCheck size={21} />
+          </div>
+          <div className="privacy-banner-content">
+            <strong>Your wellbeing. Your choice.</strong>
+            <p>
+              You decide how to seek support. Your personal support conversations
+              are not part of your manager's dashboard.
+            </p>
+          </div>
+          <button
+            className="banner-dismiss"
+            onClick={() => setShowNotice(false)}
+            aria-label="Dismiss privacy notice"
+          >
+            <X size={17} />
+          </button>
+        </div>
+      )}
+
+      <section className="support-section">
+        <div className="section-heading">
+          <div>
+            <h2>How can we support you?</h2>
+            <p>Choose the option that feels right for you.</p>
+          </div>
+          <span className="optional-label">You can change your mind at any time</span>
+        </div>
+
+        <div className="support-grid">
+          <SupportCard
+            image="/images/happy-one.jpg"
+            title="I'm doing okay"
+            description="Check in with yourself and explore wellbeing resources."
+            label="Explore wellbeing"
+            onClick={() => navigate('/follow-ups')}
+          />
+
+          <SupportCard
+            image="/images/not-okay.jpg"
+            title="I'd like someone to talk to"
+            description="Reach out for a conversation, guidance or emotional support."
+            label="Request support"
+            onClick={() => navigate('/request/talk')}
+          />
+
+          <SupportCard
+            image="/images/concerned.jpg"
+            title="Something at work is affecting me"
+            description="Talk about a workplace situation that's causing distress or concern."
+            label="Find workplace support"
+            onClick={() => navigate('/request/workplace')}
+          />
+
+          <SupportCard
+            image="/images/independent-support-1.jpg"
+            title="I need independent support"
+            description="Connect with support outside your workplace reporting structure."
+            label="Explore independent support"
+            onClick={() => navigate('/request/independent')}
+          />
+        </div>
+
+        <SupportCard
+          image="/images/retaliation.jpg"
+          title="I'm experiencing retaliation"
+          description="Seek support if you feel threatened or treated unfairly for raising a concern or speaking up."
+          label="Request retaliation support"
+          onClick={() => navigate('/my-support')}
+        />
+      </section>
+
+      <section className="lower-grid">
+        <div className="panel follow-up-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Your support</h2>
+              <p>A quick overview of your support activity.</p>
+            </div>
+            <span className="panel-icon"><MessageCircle size={18} /></span>
+          </div>
+
+          <div className="support-summary">
+            <div className="summary-icon">
+              <CheckCircle2 size={21} />
+            </div>
+            <div>
+              <strong>
+                {pendingAcknowledgementCount > 0
+                  ? `${pendingAcknowledgementCount} ${
+                      pendingAcknowledgementCount === 1 ? 'request' : 'requests'
+                    } awaiting acknowledgement`
+                  : "You're in control"}
+              </strong>
+
+              <p>
+                {pendingAcknowledgementCount > 0
+                  ? 'Your support team has not yet acknowledged these requests. You can review their status in My Support.'
+                  : "You don't have any requests awaiting acknowledgement at the moment."}
+              </p>
+            </div>
+          </div>
+
+          <NavLink to="/my-support" className="panel-link">
+            View my support <ArrowRight size={15} />
+          </NavLink>
+        </div>
+
+        <div className="panel resources-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Wellbeing resources</h2>
+              <p>Helpful information when you need it.</p>
+            </div>
+            <span className="panel-icon"><BookOpen size={18} /></span>
+          </div>
+
+          <div className="resource-item">
+            <div className="resource-icon"><Heart size={17} /></div>
+            <div className="resource-text">
+              <strong>Taking care of yourself</strong>
+              <span>Everyday wellbeing and self-care</span>
+            </div>
+            <ChevronRight size={17} />
+          </div>
+
+          <div className="resource-item">
+            <div className="resource-icon"><CircleHelp size={17} /></div>
+            <div className="resource-text">
+              <strong>Understanding your support options</strong>
+              <span>What happens when you reach out</span>
+            </div>
+            <ChevronRight size={17} />
+          </div>
+        </div>
+      </section>
+
+      <div className="dashboard-footer">
+        <ShieldCheck size={15} />
+        <span>Confidentiality, dignity and your wellbeing are central to MIVALI.</span>
+      </div>
+    </div>
+  )
+}
+
+function PlaceholderPage({
+  title,
+}: {
+  title: string
+}) {
+  return (
+    <div className="dashboard">
+      <PageHeading
+        eyebrow="MIVALI WORKSPACE"
+        title={title}
+        description="This workspace is being prepared as part of the MIVALI Employees prototype."
+      />
+      <div className="panel placeholder-panel">
+        <div className="placeholder-icon"><Heart size={25} /></div>
+        <h2>{title}</h2>
+        <p>
+          This area will contain its dedicated workflow, information and
+          functionality.
+        </p>
+        <NavLink to="/" className="panel-link">
+          Return to home <ArrowRight size={15} />
+        </NavLink>
+      </div>
+    </div>
+  )
+}
+
+function App() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [role, setRole] = useState<WorkspaceRole>('Employee')
+
+  const title = pageTitles[location.pathname] ?? 'Workspace'
+  const supportRequestCount = getSupportRequests().length
+
+  function handleRoleChange(nextRole: WorkspaceRole) {
+    setRole(nextRole)
+    setSidebarOpen(false)
+
+    const landingPages: Record<WorkspaceRole, string> = {
+      Employee: '/',
+      'Internal Support': '/internal-support',
+      Administration: '/admin',
+    }
+
+    navigate(landingPages[nextRole])
+  }
+  return (
+    <div className="app-shell">
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} supportRequestCount={supportRequestCount} role={role}/>
+      <div className="main-area">
+        <Topbar title={title} onMenuClick={() => setSidebarOpen(true)} role={role} onRoleChange={handleRoleChange}/>
+
+        <main className="main-content">
+
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/my-support" element={<MySupportPage />} />
+            <Route path="/my-support/:id/retaliation" element={<RetaliationRequestPage />} />
+            <Route path="/my-support/:id" element={<SupportRequestDetailsPage />}/>
+            <Route path="/internal-support/:id" element={<InternalSupportRequestPage />}/>
+            <Route path="/follow-ups" element={<MyFollowUpsPage />} />
+            <Route path="/internal-support" element={<InternalSupportPage />}/>
+            <Route path="/external-support" element={<PlaceholderPage title="Independent support" />} />
+            <Route path="/admin" element={<PlaceholderPage title="Administration" />} />
+            <Route path="/request/retaliation" element={<Navigate to="/my-support" replace />} />
+            <Route path="/request/:type" element={<SupportRequestPage />} />
+            <Route path="*" element={<HomePage />} />
+          </Routes>
+
+        </main>
+      </div>
+    </div>
+  )
+}
+
+export default App
+
+

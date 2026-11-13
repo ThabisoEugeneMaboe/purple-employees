@@ -1,4 +1,4 @@
-﻿
+
 import { useState } from 'react'
 import {
   CheckCircle2,
@@ -465,7 +465,7 @@ function InternalSupportPage() {
                         <span>
                           Assigned {assignment
                             ? formatDate(assignment.assignedAt)
-                            : 'â€”'}
+                            : '—'}
                         </span>
                       </div>
 
