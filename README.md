@@ -30,7 +30,7 @@ Mivali Purple is a React and TypeScript employee support application.
 Clone the repository, navigate into the project directory, and install dependencies:
 
     git clone <repository-url>
-    cd mivali-employees-app
+    cd PURPLE
     npm install
 
 ## Development
