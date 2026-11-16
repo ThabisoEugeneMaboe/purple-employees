@@ -1,4 +1,4 @@
-﻿# Mivali Purple — Employee Support Application
+﻿# Purple — Employee Support Application
 
 Mivali Purple is a React and TypeScript employee support application.
 
