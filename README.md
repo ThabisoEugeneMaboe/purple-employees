@@ -1,32 +1,71 @@
-# React + TypeScript + Vite
+﻿# Mivali Purple — Employee Support Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Mivali Purple is a React and TypeScript employee support application.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Employee support requests and request history.
+- Follow-up communication.
+- Independent support requests.
+- Retaliation support linked to original cases.
+- Internal support workspace.
+- Employee-facing request status and progress.
 
-## React Compiler
+## Technology
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React and TypeScript
+- Vite
+- React Router
+- Lucide React
+- Vitest and Testing Library
+- Oxlint
 
-## Expanding the Oxlint configuration
+## Requirements
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+- Node.js
+- npm
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+## Installation
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Clone the repository, navigate into the project directory, and install dependencies:
+
+    git clone <repository-url>
+    cd mivali-employees-app
+    npm install
+
+## Development
+
+    npm run dev
+
+## Production Build
+
+    npm run build
+
+## Tests and Linting
+
+    npm run test:run
+    npm run lint
+
+## Production Preview
+
+    npm run preview
+
+## Project Structure
+
+- `public/` — public images and assets.
+- `src/pages/employee/` — employee-facing pages.
+- `src/pages/internal-support/` — internal support workspace.
+- `src/data/` — support request data and operations.
+- `src/types/` — TypeScript definitions.
+- `src/styles/` — application styling.
+- `src/test/` — test setup.
+
+## Prototype Limitations
+
+This is a development prototype. Application data is currently managed client-side. A production backend, durable database persistence, and real authentication and authorization have not been established by this frontend alone.
+
+Do not use this prototype to store real confidential employee information until appropriate production security and data-protection safeguards are implemented.
+
+## Version History
+
+The Git repository retains the application's development history.

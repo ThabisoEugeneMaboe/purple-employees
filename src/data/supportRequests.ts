@@ -10,6 +10,7 @@
   SupportResponder,
 } from '../types/support'
 
+// Support requests and follow-ups are stored in memory and reset when the app reloads.
 const requests: SupportRequest[] = []
 const followUps: SupportFollowUp[] = []
 
@@ -34,12 +35,15 @@ export const supportResponders: SupportResponder[] = [
 const caseAssignments: CaseAssignment[] = []
 const internalCaseNotes: InternalCaseNote[] = []
 
+// Generates a human-readable reference using a timestamp fragment and a random number.
 function generateReference(): string {
   const timestamp = Date.now().toString().slice(-6)
   const random = Math.floor(100 + Math.random() * 900)
   return `MIV-${timestamp}-${random}`
 }
 
+// Returns the most recently recorded assignment for a request.
+// Reversing a copy preserves the original assignment history.
 function getLatestAssignment(
   requestId: string,
 ): CaseAssignment | undefined {
@@ -48,6 +52,8 @@ function getLatestAssignment(
     .find((assignment) => assignment.requestId === requestId)
 }
 
+// Determines whether a request may enter the internal responder assignment process.
+// Retaliation requests qualify only when the employee selected the internal route.
 function isEligibleForInternalHandling(request: SupportRequest): boolean {
   if (request.type === 'emotional' || request.type === 'workplace') {
     return true
@@ -58,12 +64,15 @@ function isEligibleForInternalHandling(request: SupportRequest): boolean {
     request.retaliationRoutePreference === 'internal'
   )
 }
+// Appends an assignment event so previous assignment states remain available.
 function addAssignmentHistory(assignment: CaseAssignment): void {
   caseAssignments.push(assignment)
 }
 
 // Support request operations
 
+// Creates a standard support request and records its initial submission details.
+// Retaliation requests use a separate function because they must reference an original case.
 export function submitSupportRequest(
   draft: SupportRequestDraft,
 ): SupportRequest {
@@ -85,6 +94,7 @@ export function submitSupportRequest(
   return request
 }
 
+// Creates a retaliation request linked to an existing non-retaliation support request.
 export function createRetaliationSupportRequest({
   originalRequestId,
   draft,
@@ -128,6 +138,7 @@ export function getSupportRequestById(
   return requests.find((request) => request.id === id)
 }
 
+// Updates the status of an existing request; returns undefined when the request is not found.
 export function updateSupportRequestStatus(
   id: string,
   status: SupportRequestStatus,
@@ -142,6 +153,7 @@ export function updateSupportRequestStatus(
 
 // Employee-visible follow-ups
 
+// Adds an employee-visible follow-up after confirming that its parent request exists.
 export function addSupportFollowUp(
   followUp: Omit<SupportFollowUp, 'id'>,
 ): SupportFollowUp {
@@ -162,6 +174,7 @@ export function addSupportFollowUp(
   return newFollowUp
 }
 
+// Retrieves follow-ups for a specified set of requests, newest first.
 export function getFollowUpsForRequests(
   requestIds: string[],
 ): SupportFollowUp[] {
@@ -184,6 +197,7 @@ export function getFollowUpsForRequest(
 
 // Responder and assignment operations
 
+// Returns active responders as copies so callers do not receive the original array objects.
 export function getSupportResponders(): SupportResponder[] {
   return supportResponders
     .filter((responder) => responder.active)
@@ -201,6 +215,8 @@ export function getAllCaseAssignments(): CaseAssignment[] {
   return [...caseAssignments]
 }
 
+// Validates and records a new assignment for an eligible request.
+// A new assignment is allowed when no assignment exists or the previous one requires resolution.
 export function assignSupportRequest({
   requestId,
   responderId,
@@ -255,6 +271,7 @@ export function assignSupportRequest({
   return { ...assignment }
 }
 
+// Accepts the current assignment only when it belongs to the specified responder.
 export function acceptSupportAssignment(
   requestId: string,
   responderId: string,
@@ -288,6 +305,7 @@ export function acceptSupportAssignment(
   return { ...updated }
 }
 
+// Records a conflict declaration against the responder's current assigned or accepted case.
 export function declareSupportConflict(
   requestId: string,
   responderId: string,
@@ -318,6 +336,7 @@ export function declareSupportConflict(
   return { ...updated }
 }
 
+// Returns eligible requests that are unassigned or available for reassignment.
 export function getUnassignedSupportRequests(): SupportRequest[] {
   return requests.filter((request) => {
     if (!isEligibleForInternalHandling(request)) {
@@ -335,6 +354,7 @@ export function getUnassignedSupportRequests(): SupportRequest[] {
   })
 }
 
+// Returns eligible requests currently assigned to the specified responder.
 export function getAssignedSupportRequests(
   responderId: string,
 ): SupportRequest[] {
@@ -359,6 +379,8 @@ export function getAssignedSupportRequests(
 // Only the responder who has accepted the current assignment
 // may add or retrieve private notes for that case.
 
+// Checks whether the specified active responder has accepted the request's latest assignment.
+// This client-side check is not a substitute for backend authorisation in a production system.
 function canAccessPrivateCaseNotes(
   requestId: string,
   responderId: string,
@@ -385,6 +407,7 @@ function canAccessPrivateCaseNotes(
   )
 }
 
+// Creates a private note after checking assignment access and validating its content.
 export function addInternalCaseNote({
   requestId,
   responderId,
@@ -432,6 +455,7 @@ export function addInternalCaseNote({
   return { ...note }
 }
 
+// Retrieves private notes for an authorised responder, ordered from newest to oldest.
 export function getInternalCaseNotes(
   requestId: string,
   responderId: string,

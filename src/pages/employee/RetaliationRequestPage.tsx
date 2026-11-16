@@ -19,6 +19,7 @@ import type {
   SupportChannel,
 } from '../../types/support'
 
+// Contact methods employees can select for retaliation-related support.
 const channels: SupportChannel[] = [
   'Phone call',
   'Email',
@@ -26,6 +27,7 @@ const channels: SupportChannel[] = [
   'Secure message',
 ]
 
+// Languages available for the employee's preferred communication.
 const languages = [
   'English',
   'isiZulu',
@@ -37,6 +39,7 @@ const languages = [
   'Other / Please discuss with me',
 ]
 
+// Preferred contact-time options presented in the form.
 const contactTimes = [
   'Morning (08:00-12:00)',
   'Afternoon (12:00-17:00)',
@@ -44,6 +47,7 @@ const contactTimes = [
   'Please arrange a suitable time with me',
 ]
 
+// Default values used when an employee starts a retaliation support request.
 const initialDraft: RetaliationSupportRequestDraft = {
   description: '',
   preferredChannel: 'Phone call',
@@ -55,6 +59,7 @@ const initialDraft: RetaliationSupportRequestDraft = {
   retaliationRoutePreference: 'unsure',
 }
 
+// Converts support request types into employee-friendly display labels.
 function getRequestLabel(type: SupportRequest['type']) {
   switch (type) {
     case 'emotional':
@@ -68,8 +73,10 @@ function getRequestLabel(type: SupportRequest['type']) {
   }
 }
 
+// Handles the submission of a retaliation report linked to an existing support request.
 function RetaliationRequestPage() {
   const { id } = useParams()
+  // Retrieves the original support request using the ID in the current route.
   const originalRequest = id ? getSupportRequestById(id) : undefined
 
   const [step, setStep] = useState(1)
@@ -79,6 +86,7 @@ function RetaliationRequestPage() {
   const [submittedRequest, setSubmittedRequest] =
     useState<ReturnType<typeof createRetaliationSupportRequest>>()
 
+  // Prevents missing requests or another retaliation report from being used as the original case.
   if (!originalRequest || originalRequest.type === 'retaliation') {
     return (
       <div className="request-page">
@@ -98,6 +106,7 @@ function RetaliationRequestPage() {
 
   const originalRequestId = originalRequest.id
 
+  // Updates a typed form field and clears any previous validation error.
   function updateDraft<K extends keyof RetaliationSupportRequestDraft>(
     field: K,
     value: RetaliationSupportRequestDraft[K],
@@ -106,6 +115,7 @@ function RetaliationRequestPage() {
     setError('')
   }
 
+  // Validates the current step before allowing the employee to continue.
   function continueStep() {
     if (step === 1 && !draft.preferredLanguage) {
       setError('Please select your preferred language.')
@@ -132,6 +142,7 @@ function RetaliationRequestPage() {
     }
 
     try {
+      // Creates a separate retaliation record linked to the original support request.
       const request = createRetaliationSupportRequest({
         originalRequestId,
         draft,
@@ -148,6 +159,7 @@ function RetaliationRequestPage() {
     }
   }
 
+  // Displays the confirmation and reference after a retaliation request is recorded.
   if (submittedRequest) {
     return (
       <div className="request-page">

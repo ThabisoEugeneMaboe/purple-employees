@@ -31,6 +31,7 @@ import type {
   SupportFollowUp,
 } from '../../types/support'
 
+// Formats request, follow-up and case-note dates using the South African locale.
 function formatDate(date: string) {
   return new Date(date).toLocaleString('en-ZA', {
     day: 'numeric',
@@ -41,21 +42,29 @@ function formatDate(date: string) {
   })
 }
 
+// Sets the initial minimum scheduling time; submission also validates against the current time.
+const MINIMUM_SCHEDULED_FOR = new Date(Date.now() + 60000).toISOString().slice(0, 16)
+
+// Displays an individual support case and provides actions for its assigned responder.
 function InternalSupportRequestPage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
 
+  // Reads the demonstration responder identity supplied in the URL query string.
   const responderId = searchParams.get('responder') ?? ''
 
+  // Resolves the responder identity against the available demonstration responder records.
   const responders = getSupportResponders()
   const currentResponder = responders.find(
     (responder) => responder.id === responderId,
   )
 
+  // Loads the current assignment so the page can determine the responder's case permissions.
   const [assignment, setAssignment] = useState<
     CaseAssignment | undefined
   >(() => (id ? getCaseAssignment(id) : undefined))
 
+  // Checks whether the selected responder matches the responder currently assigned to this case.
   const isAssignedResponder =
     Boolean(currentResponder) &&
     assignment?.responderId === responderId
@@ -63,14 +72,17 @@ function InternalSupportRequestPage() {
   const hasAcceptedAssignment =
     isAssignedResponder && assignment?.status === 'Accepted'
 
+  // Loads the support request identified by the current route parameter.
   const [request, setRequest] = useState(() =>
     id ? getSupportRequestById(id) : undefined,
   )
 
+  // Loads employee-visible updates associated with this support request.
   const [followUps, setFollowUps] = useState<SupportFollowUp[]>(() =>
     id ? getFollowUpsForRequest(id) : [],
   )
 
+  // Loads private notes only when the current responder has an accepted assignment.
   const [caseNotes, setCaseNotes] = useState<InternalCaseNote[]>(() => {
   if (!id || !hasAcceptedAssignment || !responderId) {
     return []
@@ -113,6 +125,7 @@ function InternalSupportRequestPage() {
     )
   }
 
+  // Accepts the assignment and loads the private notes available to the accepted responder.
   const handleAcceptAssignment = () => {
   if (
     !id ||
@@ -145,6 +158,7 @@ function InternalSupportRequestPage() {
   }
 }
 
+// Records a responder's conflict declaration and returns the case for reassignment.
 const handleDeclareConflict = () => {
   if (
     !id ||
@@ -181,6 +195,7 @@ const handleDeclareConflict = () => {
   }
 }
 
+    // Acknowledges a submitted request and records an employee-visible follow-up.
     const handleAcknowledge = () => {
     if (
       acknowledging ||
@@ -230,6 +245,7 @@ const handleDeclareConflict = () => {
     }
   }
 
+  // Publishes an employee-visible progress update and moves the request into progress when needed.
   const handleAddProgressUpdate = () => {
     if (!id || !hasAcceptedAssignment) {
       setError('You must accept this assignment before adding an update.')
@@ -283,6 +299,7 @@ const handleDeclareConflict = () => {
     }
   }
 
+  // Records a proposed future conversation in the employee's follow-up timeline.
   const handleScheduleConversation = () => {
     if (!id || !hasAcceptedAssignment) {
       setError('You must accept this assignment before scheduling a conversation.')
@@ -329,6 +346,7 @@ const handleDeclareConflict = () => {
     }
   }
 
+  // Saves an internal case note separately from employee-visible follow-ups.
   const handleAddPrivateNote = () => {
     if (!id || !responderId || !hasAcceptedAssignment) {
       setError('Only the accepted responder may add private case notes.')
@@ -361,6 +379,7 @@ const handleDeclareConflict = () => {
     }
   }
 
+  // Marks the request as resolved and records the resolution summary for the employee.
   const handleResolveCase = () => {
     if (!id || !hasAcceptedAssignment || request.status === 'Resolved') {
       setError('Only the accepted responder may resolve this case.')
@@ -404,6 +423,8 @@ const handleDeclareConflict = () => {
       )
     }
   }
+
+  // Maps stored request types to the labels displayed in the case details.
   const requestType = {
   emotional: 'Emotional support',
   workplace: 'Workplace support',
@@ -622,9 +643,7 @@ const handleDeclareConflict = () => {
                   type="datetime-local"
                   value={scheduledFor}
                   onChange={(event) => setScheduledFor(event.target.value)}
-                  min={new Date(Date.now() + 60000)
-                    .toISOString()
-                    .slice(0, 16)}
+                  min={MINIMUM_SCHEDULED_FOR}
                 />
 
                 <button
@@ -910,7 +929,4 @@ const handleDeclareConflict = () => {
 }
 
 export default InternalSupportRequestPage
-
-
-
 

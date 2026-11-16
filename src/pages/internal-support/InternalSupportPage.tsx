@@ -21,10 +21,13 @@ import {
 } from '../../data/supportRequests'
 import type { SupportRequest } from '../../types/support'
 
+// Defines the two workspaces available to internal support staff.
 type WorkspaceView = 'Coordinator' | 'Responder'
 
+// Demonstration coordinator identity used when recording case assignments.
 const COORDINATOR_ID = 'coordinator-001'
 
+// Formats request and assignment dates using the South African locale.
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('en-ZA', {
     day: 'numeric',
@@ -33,6 +36,7 @@ function formatDate(date: string) {
   })
 }
 
+// Converts stored request types into employee-friendly labels.
 function getRequestLabel(type: SupportRequest['type']) {
   switch (type) {
     case 'emotional':
@@ -46,6 +50,7 @@ function getRequestLabel(type: SupportRequest['type']) {
   }
 }
 
+// Determines which requests are eligible for handling by the internal support team.
 function isInternalSupportRequest(request: SupportRequest) {
   if (
     request.type === 'emotional' ||
@@ -60,6 +65,7 @@ function isInternalSupportRequest(request: SupportRequest) {
   )
 }
 
+// Provides the coordinator and responder views for internal case management.
 function InternalSupportPage() {
   const [view, setView] = useState<WorkspaceView>('Coordinator')
   const [responderId, setResponderId] = useState('responder-001')
@@ -70,10 +76,12 @@ function InternalSupportPage() {
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
 
+  // Only active users with the Responder role are offered for case assignment.
   const responders = getSupportResponders().filter(
     (responder) => responder.active && responder.role === 'Responder',
   )
 
+  // Loads the current in-memory requests and derives the workspace's case lists.
   const allRequests = getSupportRequests()
   const unassignedRequests = getUnassignedSupportRequests().filter(
     isInternalSupportRequest,
@@ -81,6 +89,7 @@ function InternalSupportPage() {
 
   const assignedRequests = getAssignedSupportRequests(responderId)
 
+  // Groups eligible internal requests by their current workflow status for the overview.
   const submitted = allRequests.filter(
     (request) =>
       isInternalSupportRequest(request) &&
@@ -100,10 +109,12 @@ function InternalSupportPage() {
       request.status === 'Resolved',
   )
 
+  // Updates the page key to refresh the displayed data after an assignment action.
   function refresh() {
     setRefreshKey((current) => current + 1)
   }
 
+  // Assigns an unassigned case to the coordinator's selected active responder.
   function handleAssign(requestId: string) {
     const selectedResponderId =
       selectedResponders[requestId] ?? responders[0]?.id
@@ -132,6 +143,7 @@ function InternalSupportPage() {
     }
   }
 
+  // Records the selected responder's acceptance of an assigned case.
   function handleAccept(requestId: string) {
     try {
       acceptSupportAssignment(requestId, responderId)

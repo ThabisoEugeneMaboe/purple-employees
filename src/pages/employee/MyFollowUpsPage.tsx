@@ -15,6 +15,7 @@ import {
 } from '../../data/supportRequests'
 import type { SupportFollowUp } from '../../types/support'
 
+// Formats follow-up dates and times using South African locale conventions.
 function formatDate(date: string) {
   return new Date(date).toLocaleString('en-ZA', {
     day: 'numeric',
@@ -25,6 +26,7 @@ function formatDate(date: string) {
   })
 }
 
+// Maps follow-up statuses to their corresponding CSS classes.
 function getStatusClass(status: SupportFollowUp['status']) {
   switch (status) {
     case 'Scheduled':
@@ -36,9 +38,12 @@ function getStatusClass(status: SupportFollowUp['status']) {
   }
 }
 
+// Displays employee-visible updates and contact arrangements for support requests.
 function MyFollowUpsPage() {
+  // Loads support requests and their follow-ups together when the page initializes.
   const [data] = useState(() => {
     const requests = getSupportRequests()
+    // Collects request IDs so their associated follow-ups can be retrieved.
     const requestIds = requests.map((request) => request.id)
 
     return {
@@ -47,6 +52,7 @@ function MyFollowUpsPage() {
     }
   })
 
+  // Creates a lookup map to connect each follow-up to its original request.
   const requestMap = new Map(
     data.requests.map((request) => [request.id, request]),
   )
@@ -80,6 +86,7 @@ function MyFollowUpsPage() {
         </div>
       </div>
 
+      {/* Shows an empty state when there are no updates to display. */}
       {data.followUps.length === 0 ? (
         <div className="support-empty-state">
           <div className="support-empty-icon">
@@ -106,6 +113,7 @@ function MyFollowUpsPage() {
 
           <div className="follow-up-list">
             {data.followUps.map((followUp) => {
+              // Finds the support request associated with this follow-up.
               const request = requestMap.get(followUp.requestId)
 
               if (!request) return null

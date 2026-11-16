@@ -34,8 +34,11 @@ import MyFollowUpsPage from './pages/employee/MyFollowUpsPage'
 import { getSupportRequests } from './data/supportRequests'
 
 
+// Defines the workspace views available in the demonstration interface.
+// These roles control the displayed UI; they do not enforce user permissions.
 type WorkspaceRole = 'Employee' | 'Internal Support' | 'Administration'
 
+// Centralises sidebar navigation so each demonstration role has its own menu.
 const navigationByRole = {
   Employee: [
     {
@@ -75,6 +78,7 @@ const navigationByRole = {
   ],
 }
 
+// Provides the breadcrumb title displayed for each recognised top-level route.
 const pageTitles: Record<string, string> = {
   '/': 'Home',
   '/my-support': 'My support',
@@ -85,6 +89,7 @@ const pageTitles: Record<string, string> = {
   '/admin': 'Administration',
 }
 
+// Renders the navigation menu for the currently selected workspace role.
 function Sidebar({
   open,
   onClose,
@@ -156,6 +161,7 @@ function Sidebar({
 }
 
 
+// Displays the current page title, navigation control and demonstration role selector.
 function Topbar({
   title,
   onMenuClick,
@@ -262,12 +268,14 @@ function SupportCard({
   )
 }
 
+// Employee landing page containing support options and a summary of support activity.
 function HomePage() {
   const [showNotice, setShowNotice] = useState(true)
   const navigate = useNavigate()
 
   const requests = getSupportRequests()
 
+  // Counts submitted requests that have not yet been acknowledged by the support team.
   const pendingAcknowledgementCount = requests.filter(
   (request) => request.status === 'Submitted',
   ).length
@@ -428,6 +436,7 @@ function HomePage() {
   )
 }
 
+// Shared presentation for workspace areas whose dedicated functionality is not yet implemented.
 function PlaceholderPage({
   title,
 }: {
@@ -455,6 +464,8 @@ function PlaceholderPage({
   )
 }
 
+// Displays confirmation for the demonstration wellbeing check-in.
+// This screen does not establish that a check-in has been saved to a backend.
 function OkayConfirmationPage() {
   return (
     <div className="dashboard">
@@ -484,6 +495,8 @@ function OkayConfirmationPage() {
     </div>
   )
 }
+
+// Main application shell: coordinates workspace navigation, shared layout and route rendering.
 function App() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -494,6 +507,7 @@ function App() {
   const title = pageTitles[location.pathname] ?? 'Workspace'
   const supportRequestCount = getSupportRequests().length
 
+  // Updates the demonstration role and redirects to that workspace's landing page.
   function handleRoleChange(nextRole: WorkspaceRole) {
     setRole(nextRole)
     setSidebarOpen(false)
@@ -514,6 +528,7 @@ function App() {
 
         <main className="main-content">
 
+          {/* Maps application URLs to their corresponding employee and internal-support pages. */}
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/im-okay" element={<OkayConfirmationPage />} />

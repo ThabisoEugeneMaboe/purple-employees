@@ -11,6 +11,7 @@ import {
 import { getSupportRequests } from '../../data/supportRequests'
 import type { SupportRequest } from '../../types/support'
 
+// Formats request dates using the South African date and language conventions.
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('en-ZA', {
     day: 'numeric',
@@ -19,6 +20,7 @@ function formatDate(date: string) {
   })
 }
 
+// Converts internal request type values into labels displayed to employees.
 function getRequestLabel(type: SupportRequest['type']) {
   switch (type) {
     case 'emotional':
@@ -32,7 +34,9 @@ function getRequestLabel(type: SupportRequest['type']) {
   }
 }
 
+// Displays the employee's submitted support requests and their current status.
 function MySupportPage() {
+  // Loads the current in-memory requests when the component is first rendered.
   const [requests] = useState<SupportRequest[]>(getSupportRequests)
 
   return (

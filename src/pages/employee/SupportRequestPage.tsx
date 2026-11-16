@@ -21,6 +21,7 @@ import type {
   SupportRequestType,
 } from '../../types/support'
 
+// Display information and icons for each available support pathway.
 const pathwayDetails: Record<
   SupportRequestType,
   { title: string; description: string; icon: typeof Heart }
@@ -47,6 +48,7 @@ const pathwayDetails: Record<
   },
 }
 
+// Contact methods offered to employees when submitting a support request.
 const channels: SupportChannel[] = [
   'Phone call',
   'Email',
@@ -72,6 +74,7 @@ const contactTimes = [
   'Please arrange a suitable time with me',
 ]
 
+// Categories employees can select when requesting independent support.
 const independentSupportOptions: {
   value: IndependentSupportCategory
   label: string
@@ -83,6 +86,7 @@ const independentSupportOptions: {
   { value: 'guidance', label: 'Guidance and advice' },
   { value: 'other', label: 'Other support' },
 ]
+// Default form values used when an employee starts a new support request.
 const initialDraft: SupportRequestDraft = {
   type: 'emotional',
   independentSupportCategories: [],
@@ -96,6 +100,7 @@ const initialDraft: SupportRequestDraft = {
   consentConfirmed: false,
 }
 
+// Converts the URL pathway parameter into a recognised support request type.
 function getPathwayType(value: string | undefined): SupportRequestType | null {
   if (value === 'talk') return 'emotional'
   if (value === 'workplace') return 'workplace'
@@ -108,6 +113,7 @@ function SupportRequestPage() {
   const { type: routeType } = useParams()
   const requestType = getPathwayType(routeType)
 
+  // Tracks the current form step and the employee's in-progress request.
   const [step, setStep] = useState(1)
   const [draft, setDraft] = useState<SupportRequestDraft>({
     ...initialDraft,
@@ -131,6 +137,7 @@ function SupportRequestPage() {
   const pathway = pathwayDetails[requestType]
   const PathwayIcon = pathway.icon
 
+  // Updates one field in the form draft and clears any previous validation error.
   function updateDraft<K extends keyof SupportRequestDraft>(
     field: K,
     value: SupportRequestDraft[K],
@@ -139,6 +146,7 @@ function SupportRequestPage() {
     setError('')
   }
 
+  // Adds or removes a category while allowing multiple independent support selections.
   function toggleIndependentCategory(category: IndependentSupportCategory) {
     const current = draft.independentSupportCategories ?? []
     const updated = current.includes(category)
@@ -147,6 +155,7 @@ function SupportRequestPage() {
 
     updateDraft('independentSupportCategories', updated)
   }
+  // Validates the current step before allowing the employee to proceed.
   function continueStep() {
     if (step === 1 && !draft.preferredLanguage) {
       setError('Please select your preferred language.')
@@ -170,6 +179,8 @@ function SupportRequestPage() {
     setStep((current) => Math.min(current + 1, 3))
   }
 
+  // Confirms consent, submits the completed draft and displays the generated reference.
+  // Submission currently uses the application's in-memory demonstration data.
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -184,6 +195,7 @@ function SupportRequestPage() {
     setError('')
   }
 
+  // Shows the confirmation screen after the request has been submitted.
   if (step === 4) {
     return (
       <div className="request-page">
@@ -272,6 +284,7 @@ function SupportRequestPage() {
         </div>
       </div>
 
+      {/* Each form step displays a different part of the request journey. */}
       <form className="request-form panel" onSubmit={handleSubmit}>
         {step === 1 && (
           <section className="form-step">
@@ -520,6 +533,8 @@ function SupportRequestPage() {
               </div>
             </div>
 
+            {/* Explain the intended safeguards for retaliation-related requests. */}
+            {/* These notices do not enforce access controls in the prototype. */}
             {requestType === 'retaliation' && (
               <div className="reassurance-note">
                 <ShieldCheck size={18} />

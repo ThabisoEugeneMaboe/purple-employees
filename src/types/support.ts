@@ -1,9 +1,11 @@
-﻿export type SupportRequestType =
+﻿// Identifies the main support pathway selected for a request.
+export type SupportRequestType =
   | 'emotional'
   | 'workplace'
   | 'independent'
   | 'retaliation'
 
+// Categories used to describe the type of independent support being requested.
 export type IndependentSupportCategory =
   | 'wellbeing'
   | 'workplace-concerns'
@@ -11,23 +13,27 @@ export type IndependentSupportCategory =
   | 'retaliation'
   | 'guidance'
   | 'other'
+// Records the employee's preferred route for handling a retaliation-related request.
 export type RetaliationRoutePreference =
   | 'internal'
   | 'independent'
   | 'unsure'
 
+// Communication methods an employee may choose for support contact.
 export type SupportChannel =
   | 'Phone call'
   | 'Email'
   | 'In-person conversation'
   | 'Secure message'
 
+// Lifecycle statuses used to track a support request.
 export type SupportRequestStatus =
   | 'Submitted'
   | 'Acknowledged'
   | 'In progress'
   | 'Resolved'
 
+// Complete support request record, including generated identifiers and submission details.
 export interface SupportRequest {
   id: string
   reference: string
@@ -47,6 +53,8 @@ export interface SupportRequest {
   createdAt: string
 }
 
+// Information collected before a standard support request is created.
+// The request ID, reference, status and creation timestamp are generated separately.
 export interface SupportRequestDraft {
   type: SupportRequestType
   retaliationRoutePreference?: RetaliationRoutePreference
@@ -60,6 +68,7 @@ export interface SupportRequestDraft {
   safeContactInstructions: string
   consentConfirmed: boolean
 }
+// Specialised request draft that requires an explicit retaliation route preference.
 export type RetaliationSupportRequestDraft = Omit<
   SupportRequestDraft,
   'type' | 'retaliationRoutePreference'
@@ -67,6 +76,7 @@ export type RetaliationSupportRequestDraft = Omit<
   retaliationRoutePreference: RetaliationRoutePreference
 }
 
+// Classifies the kind of update or interaction recorded against a support request.
 export type FollowUpType =
   | 'Acknowledgement'
   | 'Contact attempt'
@@ -75,8 +85,10 @@ export type FollowUpType =
   | 'Next step'
   | 'Resolution'
 
+// Describes the current state of an employee-visible follow-up.
 export type FollowUpStatus = 'Update' | 'Scheduled' | 'Completed'
 
+// Employee-visible update or scheduled activity associated with a support request.
 export interface SupportFollowUp {
   id: string
   requestId: string
@@ -89,6 +101,7 @@ export interface SupportFollowUp {
 }
 /* Internal support case management */
 
+// States used to track the assignment and handling of an internal support case.
 export type AssignmentStatus =
   | 'Unassigned'
   | 'Assigned'
@@ -96,11 +109,13 @@ export type AssignmentStatus =
   | 'Conflict declared'
   | 'Reassignment requested'
 
+// Classifies notes recorded within the internal case-management process.
 export type CaseNoteType =
   | 'Internal note'
   | 'Conflict declaration'
   | 'Assignment note'
 
+// Records which responder is assigned to a case and the relevant assignment history details.
 export interface CaseAssignment {
   requestId: string
   responderId: string
@@ -113,6 +128,7 @@ export interface CaseAssignment {
   reassignmentReason?: string
 }
 
+// Private internal record associated with a support case, separate from employee-visible follow-ups.
 export interface InternalCaseNote {
   id: string
   requestId: string
@@ -123,6 +139,7 @@ export interface InternalCaseNote {
   createdAt: string
 }
 
+// Describes a responder or coordinator available to the internal support workspace.
 export interface SupportResponder {
   id: string
   displayName: string

@@ -18,6 +18,7 @@ import type {
   SupportRequest,
 } from '../../types/support'
 
+// Formats request dates using the South African date and language conventions.
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('en-ZA', {
     day: 'numeric',
@@ -26,6 +27,7 @@ function formatDate(date: string) {
   })
 }
 
+// Converts request type values into employee-friendly display labels.
 function getRequestLabel(type: SupportRequest['type']) {
   switch (type) {
     case 'emotional':
@@ -39,6 +41,7 @@ function getRequestLabel(type: SupportRequest['type']) {
   }
 }
 
+// Maps independent support category values to their display labels.
 function getIndependentCategoryLabel(
   category: IndependentSupportCategory,
 ) {
@@ -53,6 +56,8 @@ function getIndependentCategoryLabel(
 
   return labels[category]
 }
+
+// Converts each request status into its position in the progress timeline.
 function getProgress(status: SupportRequest['status']) {
   switch (status) {
     case 'Submitted':
@@ -66,8 +71,10 @@ function getProgress(status: SupportRequest['status']) {
   }
 }
 
+// Displays the details, progress and follow-up history for one support request.
 function SupportRequestDetailsPage() {
   const { id } = useParams()
+  // Looks up the request using the ID supplied in the current route.
   const request = id ? getSupportRequestById(id) : undefined
 
   if (!request) {
@@ -88,21 +95,26 @@ function SupportRequestDetailsPage() {
     )
   }
 
+  // Retrieves employee-visible follow-up updates linked to this request.
   const requestFollowUps = getFollowUpsForRequest(request.id)
 
+  // Finds retaliation reports linked to this original support request.
   const linkedRetaliationRequests = getSupportRequests().filter(
     (candidate) =>
       candidate.type === 'retaliation' &&
       candidate.originalRequestId === request.id,
   )
 
+  // Retrieves the original request when viewing a linked retaliation report.
   const originalRequest =
     request.type === 'retaliation' && request.originalRequestId
       ? getSupportRequestById(request.originalRequestId)
       : undefined
 
+  // Determines the current position in the request progress timeline.
   const currentProgress = getProgress(request.status)
 
+  // Defines the stages displayed in the employee-facing progress timeline.
   const progressSteps = [
     'Request submitted',
     'Acknowledgement',
