@@ -2380,38 +2380,213 @@ a {
   }
 }
 
-/* Demo role switcher */
-.role-switcher-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-right: 14px;
-}
-
-.role-switcher-label {
-  color: var(--text-secondary);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-}
-
-.role-switcher {
-  min-width: 145px;
-  padding: 7px 28px 7px 10px;
+.sign-out-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--surface);
   color: var(--text-primary);
-  font-family: inherit;
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
-  outline: none;
 }
 
-.role-switcher:focus-visible {
+.sign-out-button:hover {
   border-color: var(--purple);
-  box-shadow: 0 0 0 3px var(--purple-soft);
+  color: var(--purple-dark);
+}
+
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(280px, 42%) 1fr;
+}
+
+.login-brand {
+  background: var(--brand-purple);
+  color: #ffffff;
+  padding: 48px 44px;
+  display: flex;
+  align-items: center;
+}
+
+.login-brand-inner {
+  max-width: 420px;
+}
+
+.login-logo {
+  margin-bottom: 36px;
+}
+
+.login-brand h1 {
+  margin: 0 0 16px;
+  font-family: Manrope, sans-serif;
+  font-size: 32px;
+  line-height: 1.25;
+}
+
+.login-brand p {
+  margin: 0 0 28px;
+  color: #d4cce3;
+  line-height: 1.6;
+}
+
+.login-brand-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--brand-gold);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  background: var(--background);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 560px;
+}
+
+.login-card h2 {
+  margin: 8px 0 10px;
+  font-size: 28px;
+}
+
+.login-card > p {
+  margin: 0 0 28px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.login-role-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.login-role-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  row-gap: 4px;
+  text-align: left;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.login-role-card:hover {
+  border-color: var(--purple);
+}
+
+.login-role-icon {
+  grid-row: 1 / span 2;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--purple-soft);
+  color: var(--purple-dark);
+}
+
+.login-role-card strong {
+  font-size: 15px;
+}
+
+.login-role-card span:last-child {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.login-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+
+.login-form {
+  display: grid;
+  gap: 16px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.login-form input:focus-visible {
+  outline: none;
+  border-color: var(--purple);
+}
+
+.login-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 13px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--brand-purple);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.login-demo-hint {
+  margin: 18px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .login-brand {
+    padding: 32px 24px;
+  }
+}
+
+@media (max-width: 700px) {
+  .sign-out-button {
+    padding: 8px 10px;
+    font-size: 0;
+    gap: 0;
+  }
+
+  .sign-out-button svg {
+    margin: 0;
+  }
 }
 
 /* Refined sidebar scrolling */
@@ -2438,22 +2613,6 @@ a {
   background: rgba(255, 255, 255, 0.38);
 }
 
-/* Responsive role switcher */
-@media (max-width: 700px) {
-  .role-switcher-wrapper {
-    margin-right: 8px;
-  }
-
-  .role-switcher {
-    min-width: 115px;
-    max-width: 135px;
-    font-size: 11px;
-  }
-
-  .role-switcher-label {
-    font-size: 8px;
-  }
-}
 
 /* Sidebar logo and trademark */
 .sidebar-logo-wrapper {

@@ -9,13 +9,14 @@ import {
   ClipboardList,
   Heart,
   Home,
+  LogOut,
   Menu,
   MessageCircle,
   ShieldCheck,
   Users,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import InternalSupportPage from './pages/internal-support/InternalSupportPage'
 import SupportRequestDetailsPage from './pages/employee/SupportRequestDetailsPage'
 import RetaliationRequestPage from './pages/employee/RetaliationRequestPage'
@@ -32,11 +33,16 @@ import SupportRequestPage from './pages/employee/SupportRequestPage'
 import MySupportPage from './pages/employee/MySupportPage'
 import MyFollowUpsPage from './pages/employee/MyFollowUpsPage'
 import { getSupportRequests } from './data/supportRequests'
-
-
-// Defines the workspace views available in the demonstration interface.
-// These roles control the displayed UI; they do not enforce user permissions.
-type WorkspaceRole = 'Employee' | 'Internal Support' | 'Administration'
+import LoginPage from './pages/login/LoginPage'
+import AdministrationPage from './pages/admin/AdministrationPage'
+import {
+  clearSession,
+  firstName,
+  getStoredSession,
+  landingPages,
+  type SessionUser,
+  type WorkspaceRole,
+} from './auth/session'
 
 // Centralises sidebar navigation so each demonstration role has its own menu.
 const navigationByRole = {
@@ -161,17 +167,17 @@ function Sidebar({
 }
 
 
-// Displays the current page title, navigation control and demonstration role selector.
+// Displays the current page title, signed-in person and sign-out control.
 function Topbar({
   title,
   onMenuClick,
-  role,
-  onRoleChange,
+  user,
+  onSignOut,
 }: {
   title: string
   onMenuClick: () => void
-  role: WorkspaceRole
-  onRoleChange: (role: WorkspaceRole) => void
+  user: SessionUser
+  onSignOut: () => void
 }) {
   return (
     <header className="topbar">
@@ -192,31 +198,19 @@ function Topbar({
       </div>
 
       <div className="topbar-right">
-        <div className="role-switcher-wrapper">
-          <span className="role-switcher-label">DEMO ROLE</span>
-
-          <select
-            className="role-switcher"
-            value={role}
-            onChange={(event) =>
-              onRoleChange(event.target.value as WorkspaceRole)
-            }
-            aria-label="Switch demonstration workspace"
-          >
-            <option value="Employee">Employee</option>
-            <option value="Internal Support">Internal Support</option>
-            <option value="Administration">Administration</option>
-          </select>
-        </div>
-
         <div className="profile">
-          <div className="avatar">NM</div>
+          <div className="avatar">{user.initials}</div>
 
           <div className="profile-info">
-            <strong>Naledi Mokoena</strong>
-            <span>{role}</span>
+            <strong>{user.displayName}</strong>
+            <span>{user.role}</span>
           </div>
         </div>
+
+        <button className="sign-out-button" onClick={onSignOut} type="button">
+          <LogOut size={16} />
+          Sign out
+        </button>
       </div>
     </header>
   )
@@ -269,7 +263,7 @@ function SupportCard({
 }
 
 // Employee landing page containing support options and a summary of support activity.
-function HomePage() {
+function HomePage({ displayName }: { displayName: string }) {
   const [showNotice, setShowNotice] = useState(true)
   const navigate = useNavigate()
 
@@ -285,7 +279,7 @@ function HomePage() {
       <div className="welcome-banner">
         <PageHeading
           eyebrow="YOUR WELLBEING MATTERS"
-          title="Hello, Naledi."
+          title={`Hello, ${firstName(displayName)}.`}
           description="Whatever you're experiencing, you don't have to navigate it alone."
         />
       </div>
@@ -496,53 +490,163 @@ function OkayConfirmationPage() {
   )
 }
 
+function RoleRoute({
+  role,
+  allow,
+  children,
+}: {
+  role: WorkspaceRole
+  allow: WorkspaceRole | WorkspaceRole[]
+  children: ReactNode
+}) {
+  const allowed = Array.isArray(allow) ? allow : [allow]
+  if (!allowed.includes(role)) {
+    return <Navigate to={landingPages[role]} replace />
+  }
+
+  return children
+}
+
 // Main application shell: coordinates workspace navigation, shared layout and route rendering.
 function App() {
   const location = useLocation()
   const navigate = useNavigate()
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [role, setRole] = useState<WorkspaceRole>('Employee')
+  const [session, setSession] = useState<SessionUser | null>(() =>
+    getStoredSession(),
+  )
 
   const title = pageTitles[location.pathname] ?? 'Workspace'
   const supportRequestCount = getSupportRequests().length
 
-  // Updates the demonstration role and redirects to that workspace's landing page.
-  function handleRoleChange(nextRole: WorkspaceRole) {
-    setRole(nextRole)
+  function handleSignOut() {
+    clearSession()
+    setSession(null)
     setSidebarOpen(false)
-
-    const landingPages: Record<WorkspaceRole, string> = {
-      Employee: '/',
-      'Internal Support': '/internal-support',
-      Administration: '/admin',
-    }
-
-    navigate(landingPages[nextRole])
+    navigate('/login', { replace: true })
   }
+
+  if (!session) {
+    return (
+      <Routes>
+        <Route
+          path="/login"
+          element={<LoginPage onLogin={setSession} />}
+        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    )
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} supportRequestCount={supportRequestCount} role={role}/>
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} supportRequestCount={supportRequestCount} role={session.role}/>
       <div className="main-area">
-        <Topbar title={title} onMenuClick={() => setSidebarOpen(true)} role={role} onRoleChange={handleRoleChange}/>
+        <Topbar title={title} onMenuClick={() => setSidebarOpen(true)} user={session} onSignOut={handleSignOut}/>
 
         <main className="main-content">
 
           {/* Maps application URLs to their corresponding employee and internal-support pages. */}
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/im-okay" element={<OkayConfirmationPage />} />
-            <Route path="/my-support" element={<MySupportPage />} />
-            <Route path="/my-support/:id/retaliation" element={<RetaliationRequestPage />} />
-            <Route path="/my-support/:id" element={<SupportRequestDetailsPage />}/>
-            <Route path="/internal-support/:id" element={<InternalSupportRequestPage />}/>
-            <Route path="/follow-ups" element={<MyFollowUpsPage />} />
-            <Route path="/internal-support" element={<InternalSupportPage />}/>
-            <Route path="/external-support" element={<PlaceholderPage title="Independent support" />} />
-            <Route path="/admin" element={<PlaceholderPage title="Administration" />} />
-            <Route path="/request/retaliation" element={<Navigate to="/my-support" replace />} />
-            <Route path="/request/:type" element={<SupportRequestPage />} />
-            <Route path="*" element={<HomePage />} />
+            <Route path="/login" element={<Navigate to={landingPages[session.role]} replace />} />
+            <Route
+              path="/"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <HomePage displayName={session.displayName} />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/im-okay"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <OkayConfirmationPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/my-support"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <MySupportPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/my-support/:id/retaliation"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <RetaliationRequestPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/my-support/:id"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <SupportRequestDetailsPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/follow-ups"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <MyFollowUpsPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/external-support"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <PlaceholderPage title="Independent support" />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/request/retaliation"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <Navigate to="/my-support" replace />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/request/:type"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <SupportRequestPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/internal-support/:id"
+              element={
+                <RoleRoute role={session.role} allow="Internal Support">
+                  <InternalSupportRequestPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/internal-support"
+              element={
+                <RoleRoute role={session.role} allow="Internal Support">
+                  <InternalSupportPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <RoleRoute role={session.role} allow="Administration">
+                  <AdministrationPage />
+                </RoleRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to={landingPages[session.role]} replace />} />
           </Routes>
 
         </main>

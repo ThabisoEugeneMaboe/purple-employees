@@ -37,6 +37,16 @@ Clone the repository, navigate into the project directory, and install dependenc
 
     npm run dev
 
+Open **http://localhost:5173/** and sign in with a role-specific account.
+
+| Role | Email | Password |
+|------|---------|----------|
+| Employee | `naledi@youngtech.local` | `demo` |
+| Internal Support | `coordinator@youngtech.local` | `demo` |
+| Administration | `admin@youngtech.local` | `demo` |
+
+Each role has its own login and workspace. Employee requests still appear in Internal Support case work and in the Administration overview.
+
 ## Production Build
 
     npm run build
