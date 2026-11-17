@@ -1,17 +1,30 @@
-export type WorkspaceRole = 'Employee' | 'Internal Support' | 'Administration'
+export type WorkspaceRole =
+  | 'Employee'
+  | 'Internal Support Coordinator'
+  | 'Internal Support Responder'
+  | 'Administration'
 
 export type SessionUser = {
   email: string
   displayName: string
   initials: string
   role: WorkspaceRole
+  staffId?: string
 }
 
 type DemoAccount = SessionUser & { password: string }
 
+export const workspaceRoles: WorkspaceRole[] = [
+  'Employee',
+  'Internal Support Coordinator',
+  'Internal Support Responder',
+  'Administration',
+]
+
 export const landingPages: Record<WorkspaceRole, string> = {
   Employee: '/',
-  'Internal Support': '/internal-support',
+  'Internal Support Coordinator': '/coordinator',
+  'Internal Support Responder': '/responder',
   Administration: '/admin',
 }
 
@@ -28,7 +41,16 @@ export const demoAccounts: DemoAccount[] = [
     password: 'demo',
     displayName: 'Support Coordinator',
     initials: 'SC',
-    role: 'Internal Support',
+    role: 'Internal Support Coordinator',
+    staffId: 'coordinator-001',
+  },
+  {
+    email: 'responder@youngtech.local',
+    password: 'demo',
+    displayName: 'Support Responder A',
+    initials: 'SR',
+    role: 'Internal Support Responder',
+    staffId: 'responder-001',
   },
   {
     email: 'admin@youngtech.local',
@@ -61,7 +83,7 @@ export function getStoredSession(): SessionUser | null {
       !parsed?.email ||
       !parsed.displayName ||
       !parsed.initials ||
-      !parsed.role
+      !workspaceRoles.includes(parsed.role)
     ) {
       return null
     }
@@ -103,6 +125,7 @@ export function authenticate(
     displayName: account.displayName,
     initials: account.initials,
     role: account.role,
+    staffId: account.staffId,
   }
 }
 

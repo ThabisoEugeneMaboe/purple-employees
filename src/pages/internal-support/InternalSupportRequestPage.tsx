@@ -2,7 +2,6 @@
 import {
   Link,
   useParams,
-  useSearchParams,
 } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -46,12 +45,12 @@ function formatDate(date: string) {
 const MINIMUM_SCHEDULED_FOR = new Date(Date.now() + 60000).toISOString().slice(0, 16)
 
 // Displays an individual support case and provides actions for its assigned responder.
-function InternalSupportRequestPage() {
+function InternalSupportRequestPage({
+  responderId,
+}: {
+  responderId: string
+}) {
   const { id } = useParams()
-  const [searchParams] = useSearchParams()
-
-  // Reads the demonstration responder identity supplied in the URL query string.
-  const responderId = searchParams.get('responder') ?? ''
 
   // Resolves the responder identity against the available demonstration responder records.
   const responders = getSupportResponders()
@@ -116,9 +115,9 @@ function InternalSupportRequestPage() {
           <p>
             This request may no longer exist or the reference may be invalid.
           </p>
-          <Link to="/internal-support" className="support-empty-link">
+          <Link to="/responder" className="support-empty-link">
             <ArrowLeft size={16} />
-            Back to internal support
+            Back to assigned cases
           </Link>
         </div>
       </div>
@@ -435,16 +434,16 @@ const handleDeclareConflict = () => {
   return (
     <div className="dashboard internal-support-page">
       <div className="page-heading">
-        <Link to="/internal-support" className="support-back-link">
+        <Link to="/responder" className="support-back-link">
           <ArrowLeft size={16} />
-          Back to support queue
+          Back to assigned cases
         </Link>
 
-        <span className="eyebrow">SUPPORT WORKSPACE</span>
+        <span className="eyebrow">RESPONDER WORKSPACE</span>
         <h1>Support request details</h1>
         <p>
-          Review the request and coordinate appropriate support and
-          follow-through.
+          Accept the assignment, support the employee, and oversee the case
+          through to resolution.
         </p>
       </div>
 

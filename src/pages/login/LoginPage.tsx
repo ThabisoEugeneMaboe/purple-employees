@@ -4,6 +4,7 @@ import {
   Heart,
   LockKeyhole,
   ShieldCheck,
+  UserCheck,
   Users,
 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
@@ -30,10 +31,18 @@ const roleOptions: Array<{
     icon: Heart,
   },
   {
-    role: 'Internal Support',
-    title: 'Internal support',
-    description: 'Acknowledge, assign and manage employee support cases.',
+    role: 'Internal Support Coordinator',
+    title: 'Internal Support Coordinator',
+    description:
+      'Review incoming requests and assign them to available responders.',
     icon: Users,
+  },
+  {
+    role: 'Internal Support Responder',
+    title: 'Internal Support Responder',
+    description:
+      'Accept assigned requests and support the employee through to resolution.',
+    icon: UserCheck,
   },
   {
     role: 'Administration',
@@ -199,6 +208,10 @@ function LoginPage({
           </div>
         )}
       </main>
+
+      <footer className="login-footer">
+        Developed by Young Tech Giants
+      </footer>
     </div>
   )
 }

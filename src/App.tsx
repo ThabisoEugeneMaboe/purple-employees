@@ -13,11 +13,13 @@ import {
   Menu,
   MessageCircle,
   ShieldCheck,
+  UserCheck,
   Users,
   X,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import InternalSupportPage from './pages/internal-support/InternalSupportPage'
+import CoordinatorPage from './pages/internal-support/CoordinatorPage'
+import ResponderPage from './pages/internal-support/ResponderPage'
 import SupportRequestDetailsPage from './pages/employee/SupportRequestDetailsPage'
 import RetaliationRequestPage from './pages/employee/RetaliationRequestPage'
 import InternalSupportRequestPage from './pages/internal-support/InternalSupportRequestPage'
@@ -57,14 +59,27 @@ const navigationByRole = {
     },
   ],
 
-  'Internal Support': [
+  'Internal Support Coordinator': [
     {
-      title: 'SUPPORT WORKSPACE',
+      title: 'COORDINATOR WORKSPACE',
       items: [
         {
-          label: 'Internal support',
+          label: 'Intake & assignment',
           icon: Users,
-          path: '/internal-support',
+          path: '/coordinator',
+        },
+      ],
+    },
+  ],
+
+  'Internal Support Responder': [
+    {
+      title: 'RESPONDER WORKSPACE',
+      items: [
+        {
+          label: 'My assigned cases',
+          icon: UserCheck,
+          path: '/responder',
         },
       ],
     },
@@ -90,7 +105,8 @@ const pageTitles: Record<string, string> = {
   '/my-support': 'My support',
   '/follow-ups': 'My follow-ups',
   '/im-okay': 'Wellbeing check-in',
-  '/internal-support': 'Internal support',
+  '/coordinator': 'Intake & assignment',
+  '/responder': 'My assigned cases',
   '/external-support': 'Independent support',
   '/admin': 'Administration',
 }
@@ -623,20 +639,32 @@ function App() {
               }
             />
             <Route
-              path="/internal-support/:id"
+              path="/coordinator"
               element={
-                <RoleRoute role={session.role} allow="Internal Support">
-                  <InternalSupportRequestPage />
+                <RoleRoute role={session.role} allow="Internal Support Coordinator">
+                  <CoordinatorPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/responder/:id"
+              element={
+                <RoleRoute role={session.role} allow="Internal Support Responder">
+                  <InternalSupportRequestPage responderId={session.staffId ?? ''} />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/responder"
+              element={
+                <RoleRoute role={session.role} allow="Internal Support Responder">
+                  <ResponderPage />
                 </RoleRoute>
               }
             />
             <Route
               path="/internal-support"
-              element={
-                <RoleRoute role={session.role} allow="Internal Support">
-                  <InternalSupportPage />
-                </RoleRoute>
-              }
+              element={<Navigate to={landingPages[session.role]} replace />}
             />
             <Route
               path="/admin"

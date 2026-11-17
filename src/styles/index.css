@@ -2402,6 +2402,7 @@ a {
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(280px, 42%) 1fr;
+  grid-template-rows: 1fr auto;
 }
 
 .login-brand {
@@ -2413,11 +2414,37 @@ a {
 }
 
 .login-brand-inner {
-  max-width: 420px;
+  max-width: 460px;
 }
 
 .login-logo {
-  margin-bottom: 36px;
+  width: 320px;
+  max-width: 100%;
+  margin-bottom: 40px;
+}
+
+.login-logo .sidebar-logo {
+  width: 320px;
+  max-width: 100%;
+  max-height: 128px;
+}
+
+.login-logo .sidebar-trademark {
+  top: -6px;
+  right: -16px;
+  font-size: 16px;
+}
+
+.login-footer {
+  grid-column: 1 / -1;
+  padding: 14px 24px;
+  background: var(--brand-purple);
+  color: var(--brand-gold);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .login-brand h1 {
@@ -2575,6 +2602,10 @@ a {
   .login-brand {
     padding: 32px 24px;
   }
+
+  .login-logo {
+    width: 260px;
+  }
 }
 
 @media (max-width: 700px) {
@@ -2622,6 +2653,15 @@ a {
   justify-content: center;
   width: 172px;
   max-width: 100%;
+}
+
+.login-brand .login-logo {
+  width: min(340px, 100%);
+}
+
+.login-brand .login-logo .sidebar-logo {
+  width: min(340px, 100%);
+  max-height: 140px;
 }
 
 .sidebar-trademark {

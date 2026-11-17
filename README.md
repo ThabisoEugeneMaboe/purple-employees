@@ -42,14 +42,19 @@ Open **http://localhost:5173/** and sign in with a role-specific account.
 | Role | Email | Password |
 |------|---------|----------|
 | Employee | `naledi@youngtech.local` | `demo` |
-| Internal Support | `coordinator@youngtech.local` | `demo` |
+| Internal Support Coordinator | `coordinator@youngtech.local` | `demo` |
+| Internal Support Responder | `responder@youngtech.local` | `demo` |
 | Administration | `admin@youngtech.local` | `demo` |
 
-Each role has its own login and workspace. Employee requests still appear in Internal Support case work and in the Administration overview.
+Each role has its own login and workspace. Employee requests go to the Coordinator for assignment. Assigned cases are accepted and closed by the Responder. Administration sees organisational activity.
 
 ## Production Build
 
     npm run build
+
+## Render
+
+This app deploys as a static site from `render.yaml` (`npm ci && npm run build`, publish `dist`).
 
 ## Tests and Linting
 

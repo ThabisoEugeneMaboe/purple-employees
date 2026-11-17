@@ -27,8 +27,9 @@ function AdministrationPage() {
         <h1>Administration</h1>
         <p>
           A confidential overview of support activity across the organisation.
-          Case work stays with Internal Support; employee conversations stay in
-          the employee workspace.
+          Coordinators assign incoming cases. Responders oversee employee
+          support through to resolution. Employee conversations stay in the
+          employee workspace.
         </p>
       </div>
 
@@ -96,9 +97,10 @@ function AdministrationPage() {
         </div>
         <h2>Connected across roles</h2>
         <p>
-          When an employee submits a request, Internal Support can acknowledge
-          and follow it up. This administration view reflects that same
-          activity without mixing the three workspaces.
+          When an employee submits a request, the Internal Support Coordinator
+          assigns it. The Internal Support Responder then accepts it and
+          follows it through to resolution. This administration view reflects
+          that same activity without mixing the workspaces.
         </p>
       </div>
     </div>
