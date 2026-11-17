@@ -132,7 +132,7 @@ function Sidebar({
         <div className="sidebar-brand">
           <div className="sidebar-logo-wrapper">
             <img
-              src="/images/logo.jpeg"
+              src={`${import.meta.env.BASE_URL}images/logo.jpeg`}
               alt="PURPLE Employees"
               className="sidebar-logo"
             />
@@ -333,7 +333,7 @@ function HomePage({ displayName }: { displayName: string }) {
 
         <div className="support-grid">
           <SupportCard
-            image="/images/1_im_okay.png"
+            image={`${import.meta.env.BASE_URL}images/1_im_okay.png`}
             title="I'm doing okay"
             description="Check in with yourself and explore wellbeing resources."
             label="Explore wellbeing"
@@ -341,7 +341,7 @@ function HomePage({ displayName }: { displayName: string }) {
           />
 
           <SupportCard
-            image="/images/2_talk_to_someone.png"
+            image={`${import.meta.env.BASE_URL}images/2_talk_to_someone.png`}
             title="I'd like someone to talk to"
             description="Reach out for a conversation, guidance or emotional support."
             label="Request support"
@@ -349,7 +349,7 @@ function HomePage({ displayName }: { displayName: string }) {
           />
 
           <SupportCard
-            image="/images/3_affecting_me_at_work.png"
+            image={`${import.meta.env.BASE_URL}images/3_affecting_me_at_work.png`}
             title="Something at work is affecting me"
             description="Talk about a workplace situation that's causing distress or concern."
             label="Find workplace support"
@@ -357,14 +357,14 @@ function HomePage({ displayName }: { displayName: string }) {
           />
 
           <SupportCard
-            image="/images/4_independent_support.png"
+            image={`${import.meta.env.BASE_URL}images/4_independent_support.png`}
             title="I need independent support"
             description="Connect with support outside your workplace reporting structure."
             label="Explore independent support"
             onClick={() => navigate('/request/independent')}
           />
         <SupportCard
-          image="/images/5_retaliation.png"
+          image={`${import.meta.env.BASE_URL}images/5_retaliation.png`}
           title="I'm experiencing retaliation"
           description="Seek support if you feel threatened or treated unfairly for raising a concern or speaking up."
           label="Request retaliation support"

@@ -99,7 +99,7 @@ function LoginPage({
         <div className="login-brand-inner">
           <div className="sidebar-logo-wrapper login-logo">
             <img
-              src="/images/logo.jpeg"
+              src={`${import.meta.env.BASE_URL}images/logo.jpeg`}
               alt="PURPLE Employees"
               className="sidebar-logo"
             />
