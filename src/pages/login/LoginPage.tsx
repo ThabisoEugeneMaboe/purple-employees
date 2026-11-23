@@ -17,6 +17,7 @@ import {
   type SessionUser,
   type WorkspaceRole,
 } from '../../auth/session'
+import ThemeToggle from '../../theme/ThemeToggle'
 
 const roleOptions: Array<{
   role: WorkspaceRole
@@ -95,6 +96,8 @@ function LoginPage({
 
   return (
     <div className="login-shell">
+      <ThemeToggle className="login-theme-toggle" />
+
       <aside className="login-brand">
         <div className="login-brand-inner">
           <div className="sidebar-logo-wrapper login-logo">

@@ -37,6 +37,7 @@ import MyFollowUpsPage from './pages/employee/MyFollowUpsPage'
 import { getSupportRequests } from './data/supportRequests'
 import LoginPage from './pages/login/LoginPage'
 import AdministrationPage from './pages/admin/AdministrationPage'
+import ThemeToggle from './theme/ThemeToggle'
 import {
   clearSession,
   firstName,
@@ -214,6 +215,8 @@ function Topbar({
       </div>
 
       <div className="topbar-right">
+        <ThemeToggle />
+
         <div className="profile">
           <div className="avatar">{user.initials}</div>
 
