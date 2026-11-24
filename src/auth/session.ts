@@ -30,10 +30,10 @@ export const landingPages: Record<WorkspaceRole, string> = {
 
 export const demoAccounts: DemoAccount[] = [
   {
-    email: 'naledi@youngtech.local',
+    email: 'thandeka@youngtech.local',
     password: 'demo',
-    displayName: 'Naledi Mokoena',
-    initials: 'NM',
+    displayName: 'Thandeka Khambule',
+    initials: 'TK',
     role: 'Employee',
   },
   {

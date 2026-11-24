@@ -41,7 +41,7 @@ Open **http://localhost:5173/** and sign in with a role-specific account.
 
 | Role | Email | Password |
 |------|---------|----------|
-| Employee | `naledi@youngtech.local` | `demo` |
+| Employee | `thandeka@youngtech.local` | `demo` |
 | Internal Support Coordinator | `coordinator@youngtech.local` | `demo` |
 | Internal Support Responder | `responder@youngtech.local` | `demo` |
 | Administration | `admin@youngtech.local` | `demo` |
