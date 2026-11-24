@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   CheckCircle2,
+  ChevronDown,
   Clock3,
   Inbox,
   MessageCircle,
@@ -31,6 +32,7 @@ function CoordinatorPage() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
+  const [loopCaseId, setLoopCaseId] = useState('all')
 
   const responders = getSupportResponders().filter(
     (responder) => responder.active && responder.role === 'Responder',
@@ -57,7 +59,38 @@ function CoordinatorPage() {
       isInternalSupportRequest(request) && request.status === 'Resolved',
   )
 
-  const activities = getCaseActivities('coordinator').slice(0, 8)
+  const activities = getCaseActivities('coordinator')
+  const loopCases = Array.from(
+    new Map(
+      activities.map((activity) => {
+        const request = allRequests.find(
+          (item) => item.id === activity.requestId,
+        )
+
+        return [
+          activity.requestId,
+          {
+            id: activity.requestId,
+            label: request
+              ? `${request.reference} · ${getRequestLabel(request.type)}`
+              : 'Unknown case',
+          },
+        ]
+      }),
+    ).values(),
+  )
+  const visibleActivities =
+    loopCaseId === 'all'
+      ? activities
+      : activities.filter((activity) => activity.requestId === loopCaseId)
+  const groupedLoop = loopCases
+    .map((loopCase) => ({
+      ...loopCase,
+      items: visibleActivities.filter(
+        (activity) => activity.requestId === loopCase.id,
+      ),
+    }))
+    .filter((group) => group.items.length > 0)
 
   function refresh() {
     setRefreshKey((current) => current + 1)
@@ -151,38 +184,77 @@ function CoordinatorPage() {
         </div>
       </section>
 
-      {activities.length > 0 && (
-        <section className="support-section">
-          <div className="section-heading">
-            <div>
-              <h2>Live case loop</h2>
+      <section className="support-section">
+        <div className="section-heading">
+          <div>
+            <h2>Live case loop</h2>
+            <p>
+              Open a case from the dropdown to follow employee and responder
+              activity after assignment.
+            </p>
+          </div>
+        </div>
+
+        <div className="panel live-loop-panel">
+          <label htmlFor="live-loop-case">Choose a live case</label>
+          <select
+            id="live-loop-case"
+            value={loopCaseId}
+            onChange={(event) => setLoopCaseId(event.target.value)}
+          >
+            <option value="all">All live cases</option>
+            {loopCases.map((loopCase) => (
+              <option key={loopCase.id} value={loopCase.id}>
+                {loopCase.label}
+              </option>
+            ))}
+          </select>
+
+          {groupedLoop.length === 0 ? (
+            <div className="internal-support-empty live-loop-empty">
+              <MessageCircle size={22} />
               <p>
-                Employee and responder activity, so you stay informed after
-                assignment.
+                Activity will appear here once a case is assigned and the
+                responder starts working it.
               </p>
             </div>
-          </div>
-          <div className="panel coordinator-activity-list">
-            {activities.map((activity) => {
-              const request = allRequests.find(
-                (item) => item.id === activity.requestId,
-              )
-
-              return (
-                <article key={activity.id} className="coordinator-activity">
-                  <strong>{activity.title}</strong>
-                  <p>{activity.message}</p>
+          ) : (
+            groupedLoop.map((group) => (
+              <details
+                key={group.id}
+                className="live-loop-dropdown"
+                open={loopCaseId !== 'all' || groupedLoop.length === 1}
+              >
+                <summary>
                   <span>
-                    {activity.actor}
-                    {request ? ` · ${request.reference}` : ''}
-                    {` · ${formatDate(activity.createdAt)}`}
+                    <strong>{group.label}</strong>
+                    <small>
+                      {group.items.length} update
+                      {group.items.length === 1 ? '' : 's'}
+                    </small>
                   </span>
-                </article>
-              )
-            })}
-          </div>
-        </section>
-      )}
+                  <ChevronDown size={18} />
+                </summary>
+                <div className="coordinator-activity-list">
+                  {group.items.map((activity) => (
+                    <article
+                      key={activity.id}
+                      className="coordinator-activity"
+                    >
+                      <strong>{activity.title}</strong>
+                      <p>{activity.message}</p>
+                      <span>
+                        {activity.actor}
+                        {` · ${formatDate(activity.createdAt)}`}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </details>
+            ))
+          )}
+        </div>
+      </section>
 
       <section className="support-section">
         <div className="section-heading">

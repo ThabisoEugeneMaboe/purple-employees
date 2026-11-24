@@ -41,6 +41,43 @@ function formatDate(date: string) {
   })
 }
 
+function SuccessPopup({
+  message,
+  onClose,
+}: {
+  message: string
+  onClose: () => void
+}) {
+  return (
+    <div
+      className="success-popup-overlay"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        className="success-popup"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="responder-success-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="success-popup-icon">
+          <CheckCircle2 size={36} />
+        </div>
+        <h2 id="responder-success-title">Success</h2>
+        <p>{message}</p>
+        <button
+          type="button"
+          className="internal-request-acknowledge-button"
+          onClick={onClose}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // Sets the initial minimum scheduling time; submission also validates against the current time.
 const MINIMUM_SCHEDULED_FOR = new Date(Date.now() + 60000).toISOString().slice(0, 16)
 
@@ -104,28 +141,9 @@ function InternalSupportRequestPage({
   const [acknowledging, setAcknowledging] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [successSlot, setSuccessSlot] = useState<
-    | ''
-    | 'progress'
-    | 'schedule'
-    | 'note'
-    | 'resolve'
-    | 'accept'
-    | 'acknowledge'
-  >('')
 
-  function showSuccess(
-    slot:
-      | 'progress'
-      | 'schedule'
-      | 'note'
-      | 'resolve'
-      | 'accept'
-      | 'acknowledge',
-    message: string,
-  ) {
+  function showSuccess(message: string) {
     setError('')
-    setSuccessSlot(slot)
     setSuccess(message)
   }
 
@@ -162,7 +180,6 @@ function InternalSupportRequestPage({
   }
 
   setSuccess('')
-  setSuccessSlot('')
   setError('')
 
   try {
@@ -176,7 +193,6 @@ function InternalSupportRequestPage({
     const notes = getInternalCaseNotes(id, responderId)
     setCaseNotes(notes)
     showSuccess(
-      'accept',
       'Assignment accepted. The employee can see that a responder has taken the case, and the coordinator stays in the loop.',
     )
   } catch (error) {
@@ -216,6 +232,9 @@ const handleDeclareConflict = () => {
     setAssignment(updatedAssignment)
     setCaseNotes([])
     setConflictReason('')
+    showSuccess(
+      'Conflict recorded. This case has been returned to the coordinator for reassignment.',
+    )
   } catch (error) {
     setError(
       error instanceof Error
@@ -241,7 +260,6 @@ const handleDeclareConflict = () => {
 
     setAcknowledging(true)
     setSuccess('')
-    setSuccessSlot('')
     setError('')
 
     try {
@@ -267,7 +285,6 @@ const handleDeclareConflict = () => {
       setRequest(updatedRequest)
       setFollowUps((current) => [newFollowUp, ...current])
       showSuccess(
-        'acknowledge',
         'Request acknowledged. The employee has been updated, and the coordinator can see this stage.',
       )
     } catch (error) {
@@ -327,7 +344,6 @@ const handleDeclareConflict = () => {
       setProgressTitle('')
       setProgressMessage('')
       showSuccess(
-        'progress',
         'Progress update published. The employee can read it now, and the coordinator has been notified.',
       )
     } catch (error) {
@@ -378,7 +394,6 @@ const handleDeclareConflict = () => {
       setFollowUps((current) => [newFollowUp, ...current])
       setScheduledFor('')
       showSuccess(
-        'schedule',
         'Conversation recorded. The employee can see the proposed time, and the coordinator stays informed.',
       )
     } catch (error) {
@@ -415,7 +430,6 @@ const handleDeclareConflict = () => {
       setCaseNotes((current) => [newNote, ...current])
       setNoteDraft('')
       showSuccess(
-        'note',
         'Private note saved. The coordinator was told a note was added; the employee cannot see the note content.',
       )
     } catch (error) {
@@ -464,7 +478,6 @@ const handleDeclareConflict = () => {
       setFollowUps((current) => [newFollowUp, ...current])
       setResolutionMessage('')
       showSuccess(
-        'resolve',
         'Case resolved. The employee has the outcome, and the coordinator can see that this case is closed.',
       )
     } catch (error) {
@@ -515,13 +528,10 @@ const handleDeclareConflict = () => {
       </div>
 
       {success && (
-        <div className="action-success-banner" role="status">
-          <CheckCircle2 size={22} />
-          <div>
-            <strong>It went through</strong>
-            <p>{success}</p>
-          </div>
-        </div>
+        <SuccessPopup
+          message={success}
+          onClose={() => setSuccess('')}
+        />
       )}
 
       <div className="internal-request-detail-grid">
@@ -684,12 +694,6 @@ const handleDeclareConflict = () => {
                 >
                   Publish progress update
                 </button>
-                {successSlot === 'progress' && (
-                  <p className="inline-action-success" role="status">
-                    <CheckCircle2 size={16} />
-                    {success}
-                  </p>
-                )}
               </div>
             </section>
 
@@ -721,12 +725,6 @@ const handleDeclareConflict = () => {
                 >
                   Record scheduled conversation
                 </button>
-                {successSlot === 'schedule' && (
-                  <p className="inline-action-success" role="status">
-                    <CheckCircle2 size={16} />
-                    {success}
-                  </p>
-                )}
 
                 <p>
                   This records the proposed arrangement in the employee's
@@ -767,12 +765,6 @@ const handleDeclareConflict = () => {
                 >
                   Save private note
                 </button>
-                {successSlot === 'note' && (
-                  <p className="inline-action-success" role="status">
-                    <CheckCircle2 size={16} />
-                    {success}
-                  </p>
-                )}
               </div>
 
             <div className="internal-request-timeline-list">
@@ -835,12 +827,6 @@ const handleDeclareConflict = () => {
       >
         Mark case as resolved
       </button>
-      {successSlot === 'resolve' && (
-        <p className="inline-action-success" role="status">
-          <CheckCircle2 size={16} />
-          {success}
-        </p>
-      )}
 
       <p>
         Only resolve a case when the support process has reached
@@ -971,13 +957,6 @@ const handleDeclareConflict = () => {
                 This assignment is not currently available for action.
               </p>
             )}
-
-            {successSlot === 'accept' || successSlot === 'acknowledge' ? (
-              <p className="inline-action-success" role="status">
-                <CheckCircle2 size={16} />
-                {success}
-              </p>
-            ) : null}
 
             {error && (
               <p className="internal-request-error" role="alert">
