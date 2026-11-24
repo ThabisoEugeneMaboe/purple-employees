@@ -8,7 +8,10 @@ import {
   MessageCircle,
   ShieldCheck,
 } from 'lucide-react'
-import { getSupportRequests } from '../../data/supportRequests'
+import {
+  getEmployeeJourneyLabel,
+  getSupportRequests,
+} from '../../data/supportRequests'
 import type { SupportRequest } from '../../types/support'
 
 // Formats request dates using the South African date and language conventions.
@@ -46,7 +49,8 @@ function MySupportPage() {
           <span className="eyebrow">EMPLOYEE WORKSPACE</span>
           <h1>My support</h1>
           <p>
-            Your support requests, their progress, and the next steps.
+            Track every stage — from coordinator assignment to responder
+            follow-up — until your case is resolved.
           </p>
         </div>
 
@@ -61,8 +65,8 @@ function MySupportPage() {
         <div>
           <strong>Your support space</strong>
           <p>
-            This prototype displays requests submitted during your current
-            session. No real support team is notified.
+            You stay in the loop as coordinators assign and responders
+            follow up. Personal details remain in this confidential workspace.
           </p>
         </div>
       </div>
@@ -107,7 +111,7 @@ function MySupportPage() {
                     .toLowerCase()
                     .replace(/\s+/g, '-')}`}
                 >
-                  {request.status}
+                  {getEmployeeJourneyLabel(request)}
                 </span>
               </div>
 

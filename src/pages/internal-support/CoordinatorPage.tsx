@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import {
   assignSupportRequest,
+  getCaseActivities,
   getCaseAssignment,
   getSupportResponders,
   getSupportRequests,
@@ -56,6 +57,8 @@ function CoordinatorPage() {
       isInternalSupportRequest(request) && request.status === 'Resolved',
   )
 
+  const activities = getCaseActivities('coordinator').slice(0, 8)
+
   function refresh() {
     setRefreshKey((current) => current + 1)
   }
@@ -77,7 +80,9 @@ function CoordinatorPage() {
       })
 
       setError('')
-      setNotice('The case has been assigned to a responder.')
+      setNotice(
+        'Assigned. The employee can see this stage, and you will receive responder activity in the live case loop.',
+      )
       refresh()
     } catch (err) {
       setError(
@@ -145,6 +150,39 @@ function CoordinatorPage() {
           </div>
         </div>
       </section>
+
+      {activities.length > 0 && (
+        <section className="support-section">
+          <div className="section-heading">
+            <div>
+              <h2>Live case loop</h2>
+              <p>
+                Employee and responder activity, so you stay informed after
+                assignment.
+              </p>
+            </div>
+          </div>
+          <div className="panel coordinator-activity-list">
+            {activities.map((activity) => {
+              const request = allRequests.find(
+                (item) => item.id === activity.requestId,
+              )
+
+              return (
+                <article key={activity.id} className="coordinator-activity">
+                  <strong>{activity.title}</strong>
+                  <p>{activity.message}</p>
+                  <span>
+                    {activity.actor}
+                    {request ? ` · ${request.reference}` : ''}
+                    {` · ${formatDate(activity.createdAt)}`}
+                  </span>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="support-section">
         <div className="section-heading">

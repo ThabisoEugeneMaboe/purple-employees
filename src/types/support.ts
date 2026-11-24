@@ -99,6 +99,18 @@ export interface SupportFollowUp {
   createdAt: string
   scheduledFor?: string
 }
+
+export type CaseActivityAudience = 'employee' | 'coordinator'
+
+export interface CaseActivity {
+  id: string
+  requestId: string
+  createdAt: string
+  title: string
+  message: string
+  actor: string
+  audience: CaseActivityAudience[]
+}
 /* Internal support case management */
 
 // States used to track the assignment and handling of an internal support case.

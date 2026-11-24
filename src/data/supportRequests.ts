@@ -8,6 +8,8 @@
   InternalCaseNote,
   CaseNoteType,
   SupportResponder,
+  CaseActivity,
+  CaseActivityAudience,
 } from '../types/support'
 
 // Support requests and follow-ups are stored in memory and reset when the app reloads.
@@ -34,6 +36,119 @@ export const supportResponders: SupportResponder[] = [
 // Assignment history is retained rather than overwritten.
 const caseAssignments: CaseAssignment[] = []
 const internalCaseNotes: InternalCaseNote[] = []
+const caseActivities: CaseActivity[] = []
+
+function recordActivity({
+  requestId,
+  title,
+  message,
+  actor,
+  audience,
+}: {
+  requestId: string
+  title: string
+  message: string
+  actor: string
+  audience: CaseActivityAudience[]
+}): CaseActivity {
+  const activity: CaseActivity = {
+    id: crypto.randomUUID(),
+    requestId,
+    createdAt: new Date().toISOString(),
+    title,
+    message,
+    actor,
+    audience,
+  }
+
+  caseActivities.unshift(activity)
+  return activity
+}
+
+function addJourneyFollowUp({
+  requestId,
+  type,
+  status,
+  title,
+  message,
+  scheduledFor,
+}: {
+  requestId: string
+  type: SupportFollowUp['type']
+  status: SupportFollowUp['status']
+  title: string
+  message: string
+  scheduledFor?: string
+}): SupportFollowUp {
+  const followUp: SupportFollowUp = {
+    id: crypto.randomUUID(),
+    requestId,
+    type,
+    status,
+    title,
+    message,
+    createdAt: new Date().toISOString(),
+    scheduledFor,
+  }
+
+  followUps.unshift(followUp)
+  return followUp
+}
+
+export function getCaseActivities(
+  audience?: CaseActivityAudience,
+): CaseActivity[] {
+  return caseActivities.filter((activity) =>
+    audience ? activity.audience.includes(audience) : true,
+  )
+}
+
+export function getCaseActivitiesForRequest(
+  requestId: string,
+  audience?: CaseActivityAudience,
+): CaseActivity[] {
+  return getCaseActivities(audience).filter(
+    (activity) => activity.requestId === requestId,
+  )
+}
+
+export function isInternalCase(request: SupportRequest): boolean {
+  return isEligibleForInternalHandling(request)
+}
+
+export function getEmployeeJourneyLabel(request: SupportRequest): string {
+  if (request.status === 'Resolved') {
+    return 'Resolved'
+  }
+
+  if (!isEligibleForInternalHandling(request)) {
+    return request.status
+  }
+
+  const assignment = getLatestAssignment(request.id)
+
+  if (!assignment) {
+    return 'With coordinator'
+  }
+
+  if (assignment.status === 'Assigned') {
+    return 'Assigned to responder'
+  }
+
+  if (assignment.status === 'Accepted') {
+    if (request.status === 'Submitted') {
+      return 'Responder accepted'
+    }
+
+    return request.status
+  }
+
+  if (assignment.status === 'Conflict declared') {
+    return 'Returning to coordinator'
+  }
+
+  return request.status
+}
 
 // Generates a human-readable reference using a timestamp fragment and a random number.
 function generateReference(): string {
@@ -91,7 +206,35 @@ export function submitSupportRequest(
   }
 
   requests.unshift(request)
+  recordSubmissionJourney(request)
   return request
+}
+
+function recordSubmissionJourney(request: SupportRequest) {
+  const internal = isEligibleForInternalHandling(request)
+
+  recordActivity({
+    requestId: request.id,
+    actor: 'Employee',
+    audience: ['employee', 'coordinator'],
+    title: internal
+      ? 'Request received by Internal Support'
+      : 'Request submitted',
+    message: internal
+      ? `Request ${request.reference} is with a coordinator for assignment.`
+      : `Request ${request.reference} has been submitted.`,
+  })
+
+  if (internal) {
+    addJourneyFollowUp({
+      requestId: request.id,
+      type: 'Progress update',
+      status: 'Update',
+      title: 'Your request is with a coordinator',
+      message:
+        'Internal Support has received your request. A coordinator will assign a responder, and you will see each stage here until it is resolved.',
+    })
+  }
 }
 
 // Creates a retaliation request linked to an existing non-retaliation support request.
@@ -125,6 +268,7 @@ export function createRetaliationSupportRequest({
   }
 
   requests.unshift(request)
+  recordSubmissionJourney(request)
   return request
 }
 
@@ -171,6 +315,15 @@ export function addSupportFollowUp(
   }
 
   followUps.unshift(newFollowUp)
+
+  recordActivity({
+    requestId: followUp.requestId,
+    actor: 'Internal Support Responder',
+    audience: ['coordinator'],
+    title: newFollowUp.title,
+    message: `Employee update recorded for this case: ${newFollowUp.message}`,
+  })
+
   return newFollowUp
 }
 
@@ -268,6 +421,22 @@ export function assignSupportRequest({
 
   addAssignmentHistory(assignment)
 
+  addJourneyFollowUp({
+    requestId,
+    type: 'Progress update',
+    status: 'Update',
+    title: 'A responder has been assigned',
+    message: `${responder.displayName} has been assigned to your request. They will accept the case next, then keep you updated until it is resolved.`,
+  })
+
+  recordActivity({
+    requestId,
+    actor: 'Internal Support Coordinator',
+    audience: ['employee', 'coordinator'],
+    title: `Assigned ${request.reference}`,
+    message: `Assigned to ${responder.displayName}. The employee has been notified.`,
+  })
+
   return { ...assignment }
 }
 
@@ -301,6 +470,24 @@ export function acceptSupportAssignment(
   }
 
   addAssignmentHistory(updated)
+
+  addJourneyFollowUp({
+    requestId,
+    type: 'Progress update',
+    status: 'Update',
+    title: 'Your responder has accepted the case',
+    message:
+      'A support responder is now looking after your request. You will receive updates as they acknowledge, contact you, and work towards resolution.',
+  })
+
+  recordActivity({
+    requestId,
+    actor: 'Internal Support Responder',
+    audience: ['employee', 'coordinator'],
+    title: `Responder accepted ${request.reference}`,
+    message:
+      'The assigned responder accepted the case. The employee has been kept in the loop.',
+  })
 
   return { ...updated }
 }
@@ -452,7 +639,129 @@ export function addInternalCaseNote({
 
   internalCaseNotes.unshift(note)
 
+  recordActivity({
+    requestId,
+    actor: responder.displayName,
+    audience: ['coordinator'],
+    title: `Internal note added on ${request.reference}`,
+    message:
+      'The responder saved a private case note. The note itself is not visible to the employee.',
+  })
+
   return { ...note }
+}
+
+export type EmployeeJourneyStep = {
+  id: string
+  label: string
+  detail: string
+  completed: boolean
+  current: boolean
+  at?: string
+}
+
+export function getEmployeeJourney(request: SupportRequest): EmployeeJourneyStep[] {
+  const assignment = getLatestAssignment(request.id)
+  const internal = isEligibleForInternalHandling(request)
+  const resolved = request.status === 'Resolved'
+
+  if (!internal) {
+    const steps = [
+      {
+        id: 'submitted',
+        label: 'Request submitted',
+        detail: 'Your request was received.',
+        at: request.createdAt,
+        completed: true,
+      },
+      {
+        id: 'acknowledged',
+        label: 'Acknowledgement',
+        detail: 'Support has acknowledged your request.',
+        completed:
+          request.status === 'Acknowledged' ||
+          request.status === 'In progress' ||
+          resolved,
+      },
+      {
+        id: 'progress',
+        label: 'Support in progress',
+        detail: 'Your support is being followed up.',
+        completed: request.status === 'In progress' || resolved,
+      },
+      {
+        id: 'resolved',
+        label: 'Resolved',
+        detail: 'This request has been closed.',
+        completed: resolved,
+      },
+    ]
+
+    const currentIndex = steps.findIndex((step) => !step.completed)
+    return steps.map((step, index) => ({
+      ...step,
+      current:
+        currentIndex === -1
+          ? index === steps.length - 1
+          : index === currentIndex,
+    }))
+  }
+
+  const steps = [
+    {
+      id: 'submitted',
+      label: 'Request submitted',
+      detail: 'You sent this request from your employee workspace.',
+      at: request.createdAt,
+      completed: true,
+    },
+    {
+      id: 'coordinator',
+      label: 'With coordinator',
+      detail: 'A coordinator is reviewing who should help you.',
+      completed: Boolean(assignment),
+    },
+    {
+      id: 'assigned',
+      label: 'Assigned to a responder',
+      detail: assignment
+        ? `Assigned to ${assignment.responderName}.`
+        : 'Waiting for a coordinator to assign a responder.',
+      at: assignment?.assignedAt,
+      completed: Boolean(assignment),
+    },
+    {
+      id: 'accepted',
+      label: 'Responder accepted',
+      detail: 'Your responder has taken ownership of the case.',
+      at: assignment?.acceptedAt,
+      completed:
+        request.status === 'Acknowledged' ||
+        request.status === 'In progress' ||
+        resolved,
+    },
+    {
+      id: 'progress',
+      label: 'Support in progress',
+      detail: 'Updates and conversations will appear in your follow-ups.',
+      completed: request.status === 'In progress' || resolved,
+    },
+    {
+      id: 'resolved',
+      label: 'Resolved',
+      detail: 'The support process for this request is complete.',
+      completed: resolved,
+    },
+  ]
+
+  const currentIndex = steps.findIndex((step) => !step.completed)
+  return steps.map((step, index) => ({
+    ...step,
+    current:
+      currentIndex === -1
+        ? index === steps.length - 1
+        : index === Math.max(currentIndex - 0, currentIndex),
+  }))
 }
 
 // Retrieves private notes for an authorised responder, ordered from newest to oldest.

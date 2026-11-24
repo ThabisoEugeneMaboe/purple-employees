@@ -9,6 +9,8 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import {
+  getEmployeeJourney,
+  getEmployeeJourneyLabel,
   getFollowUpsForRequest,
   getSupportRequestById,
   getSupportRequests,
@@ -57,20 +59,6 @@ function getIndependentCategoryLabel(
   return labels[category]
 }
 
-// Converts each request status into its position in the progress timeline.
-function getProgress(status: SupportRequest['status']) {
-  switch (status) {
-    case 'Submitted':
-      return 0
-    case 'Acknowledged':
-      return 1
-    case 'In progress':
-      return 2
-    case 'Resolved':
-      return 3
-  }
-}
-
 // Displays the details, progress and follow-up history for one support request.
 function SupportRequestDetailsPage() {
   const { id } = useParams()
@@ -111,16 +99,7 @@ function SupportRequestDetailsPage() {
       ? getSupportRequestById(request.originalRequestId)
       : undefined
 
-  // Determines the current position in the request progress timeline.
-  const currentProgress = getProgress(request.status)
-
-  // Defines the stages displayed in the employee-facing progress timeline.
-  const progressSteps = [
-    'Request submitted',
-    'Acknowledgement',
-    'Support in progress',
-    'Resolution',
-  ]
+  const journey = getEmployeeJourney(request)
 
   return (
     <div className="request-details-page">
@@ -141,7 +120,7 @@ function SupportRequestDetailsPage() {
             .toLowerCase()
             .replace(/\s+/g, '-')}`}
         >
-          {request.status}
+          {getEmployeeJourneyLabel(request)}
         </span>
       </div>
 
@@ -301,16 +280,23 @@ function SupportRequestDetailsPage() {
 
         <aside className="request-details-sidebar">
           <section className="request-details-card">
-            <h2>Request progress</h2>
+            <h2>Where your request is now</h2>
+            <p className="request-journey-intro">
+              You will see each hand-off from coordinator to responder until
+              this case is resolved.
+            </p>
 
             <div className="request-timeline">
-              {progressSteps.map((step, index) => {
-                const completed = index <= currentProgress
-
+              {journey.map((step) => {
                 return (
-                  <div className="request-timeline-item" key={step}>
+                  <div
+                    className={`request-timeline-item ${
+                      step.current ? 'request-timeline-current' : ''
+                    }`}
+                    key={step.id}
+                  >
                     <div className="request-timeline-marker">
-                      {completed ? (
+                      {step.completed && !step.current ? (
                         <CheckCircle2 size={19} />
                       ) : (
                         <Circle size={19} />
@@ -318,16 +304,13 @@ function SupportRequestDetailsPage() {
                     </div>
 
                     <div>
-                      <strong className={completed ? 'completed' : ''}>
-                        {step}
+                      <strong className={step.completed ? 'completed' : ''}>
+                        {step.label}
                       </strong>
-
-                      {index === 0 && (
-                        <span>{formatDate(request.createdAt)}</span>
-                      )}
-
-                      {index === currentProgress && (
-                        <span>Current stage</span>
+                      <span>{step.detail}</span>
+                      {step.current && <span>Current stage</span>}
+                      {step.at && !step.current && (
+                        <span>{formatDate(step.at)}</span>
                       )}
                     </div>
                   </div>
@@ -340,8 +323,8 @@ function SupportRequestDetailsPage() {
             <ShieldCheck size={21} />
             <strong>Your support information</strong>
             <p>
-              This prototype stores request information in memory.
-              No real support team has been notified.
+              Updates from coordinators and responders appear here and in
+              My follow-ups, without leaving your confidential workspace.
             </p>
           </section>
 
@@ -354,8 +337,8 @@ function SupportRequestDetailsPage() {
                 <Clock3 size={23} />
                 <p>No follow-up updates yet.</p>
                 <span>
-                    Updates will appear here when a support responder
-                    records an employee-visible update.
+                    You will see coordinator assignment, responder
+                    acceptance, and every follow-up until resolution.
                 </span>
                 </div>
             ) : (
