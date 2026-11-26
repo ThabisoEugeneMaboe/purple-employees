@@ -495,6 +495,7 @@ const handleDeclareConflict = () => {
   workplace: 'Workplace support',
   independent: 'Independent support',
   retaliation: 'Retaliation support',
+  iod: 'Injury on duty / J88',
   }[request.type]
 
   return (
@@ -559,6 +560,52 @@ const handleDeclareConflict = () => {
               <h3>Employee's message</h3>
               <p>{request.description}</p>
             </div>
+
+            {request.type === 'iod' && (
+              <div className="internal-request-information">
+                <h3>IOD / J88 details</h3>
+                <div className="internal-request-information-grid">
+                  <div>
+                    <span>Incident date</span>
+                    <strong>
+                      {request.iodIncidentDate}
+                      {request.iodIncidentTime
+                        ? ` · ${request.iodIncidentTime}`
+                        : ''}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Location</span>
+                    <strong>{request.iodLocation}</strong>
+                  </div>
+                  <div>
+                    <span>Medical care</span>
+                    <strong>
+                      {request.iodMedicalAttended
+                        ? 'Already attended'
+                        : 'Not yet attended'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Still at work</span>
+                    <strong>
+                      {request.iodStillAtWork ? 'Yes' : 'No'}
+                    </strong>
+                  </div>
+                </div>
+                {(request.attachments ?? []).length > 0 && (
+                  <ul className="iod-file-list">
+                    {request.attachments?.map((file) => (
+                      <li key={file.id}>
+                        <a href={file.dataUrl} download={file.name}>
+                          {file.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             <div className="internal-request-information">
               <h3>Contact preferences</h3>

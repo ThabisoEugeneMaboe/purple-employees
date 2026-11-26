@@ -32,6 +32,8 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import SupportRequestPage from './pages/employee/SupportRequestPage'
+import IodEmergencyPage from './pages/employee/IodEmergencyPage'
+import RequestReceivedPage from './pages/employee/RequestReceivedPage'
 import MySupportPage from './pages/employee/MySupportPage'
 import MyFollowUpsPage from './pages/employee/MyFollowUpsPage'
 import { getSupportRequests } from './data/supportRequests'
@@ -110,6 +112,7 @@ const pageTitles: Record<string, string> = {
   '/responder': 'My assigned cases',
   '/external-support': 'Independent support',
   '/admin': 'Administration',
+  '/request/iod': 'IOD / J88',
 }
 
 // Renders the navigation menu for the currently selected workspace role.
@@ -260,15 +263,18 @@ function SupportCard({
   description,
   label,
   onClick,
+  badge,
 }: {
   image: string
   title: string
   description: string
   label: string
   onClick: () => void
+  badge?: string
 }) {
   return (
     <button className="support-card" onClick={onClick}>
+      {badge && <span className="support-card-badge">{badge}</span>}
       <img className="support-card-image" src={image} alt="" />
       <div className="support-card-content">
         <h3>{title}</h3>
@@ -372,6 +378,14 @@ function HomePage({ displayName }: { displayName: string }) {
           description="Seek support if you feel threatened or treated unfairly for raising a concern or speaking up."
           label="Request retaliation support"
           onClick={() => navigate('/my-support')}
+        />
+        <SupportCard
+          image={`${import.meta.env.BASE_URL}images/6_iod_emergency.jpg`}
+          title="Injury on duty or emergency"
+          description="Report a workplace injury and upload IOD or J88 forms so Internal Support can start the right follow-up."
+          label="Start SOS / IOD report"
+          badge="SOS"
+          onClick={() => navigate('/request/iod')}
         />
         </div>
       </section>
@@ -632,6 +646,18 @@ function App() {
                   <Navigate to="/my-support" replace />
                 </RoleRoute>
               }
+            />
+            <Route
+              path="/request/iod"
+              element={
+                <RoleRoute role={session.role} allow="Employee">
+                  <IodEmergencyPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/received/:id"
+              element={<RequestReceivedPage />}
             />
             <Route
               path="/request/:type"

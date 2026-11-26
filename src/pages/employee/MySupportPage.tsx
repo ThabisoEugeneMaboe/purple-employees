@@ -34,6 +34,8 @@ function getRequestLabel(type: SupportRequest['type']) {
       return 'Independent support'
     case 'retaliation':
       return 'Retaliation support'
+    case 'iod':
+      return 'Injury on duty / J88'
   }
 }
 

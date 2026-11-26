@@ -18,11 +18,17 @@ export function getRequestLabel(type: SupportRequest['type']) {
       return 'Independent support'
     case 'retaliation':
       return 'Retaliation support'
+    case 'iod':
+      return 'Injury on duty / J88'
   }
 }
 
 export function isInternalSupportRequest(request: SupportRequest) {
-  if (request.type === 'emotional' || request.type === 'workplace') {
+  if (
+    request.type === 'emotional' ||
+    request.type === 'workplace' ||
+    request.type === 'iod'
+  ) {
     return true
   }
 

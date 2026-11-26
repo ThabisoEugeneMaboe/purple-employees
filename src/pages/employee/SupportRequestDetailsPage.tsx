@@ -40,6 +40,8 @@ function getRequestLabel(type: SupportRequest['type']) {
       return 'Independent support'
     case 'retaliation':
       return 'Retaliation support'
+    case 'iod':
+      return 'Injury on duty / J88'
   }
 }
 
@@ -174,6 +176,46 @@ function SupportRequestDetailsPage() {
                 {request.description}
               </p>
             </div>
+
+            {request.type === 'iod' && (
+              <>
+                <div className="request-detail-field">
+                  <span>Incident date</span>
+                  <strong>
+                    {request.iodIncidentDate}
+                    {request.iodIncidentTime
+                      ? ` · ${request.iodIncidentTime}`
+                      : ''}
+                  </strong>
+                </div>
+                <div className="request-detail-field">
+                  <span>Location</span>
+                  <strong>{request.iodLocation}</strong>
+                </div>
+                <div className="request-detail-field">
+                  <span>Medical care</span>
+                  <strong>
+                    {request.iodMedicalAttended
+                      ? 'Already attended'
+                      : 'Not yet attended'}
+                  </strong>
+                </div>
+                {(request.attachments ?? []).length > 0 && (
+                  <div className="request-detail-field">
+                    <span>Uploaded documents</span>
+                    <ul>
+                      {request.attachments?.map((file) => (
+                        <li key={file.id}>
+                          <a href={file.dataUrl} download={file.name}>
+                            {file.name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
           </section>
 
           {request.type === 'retaliation' ? (

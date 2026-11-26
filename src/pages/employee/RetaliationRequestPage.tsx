@@ -2,13 +2,12 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  CheckCircle2,
   LockKeyhole,
   MessageCircle,
   ShieldCheck,
 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   createRetaliationSupportRequest,
   getSupportRequestById,
@@ -70,11 +69,14 @@ function getRequestLabel(type: SupportRequest['type']) {
       return 'Independent support'
     case 'retaliation':
       return 'Retaliation support'
+    case 'iod':
+      return 'Injury on duty / J88'
   }
 }
 
 // Handles the submission of a retaliation report linked to an existing support request.
 function RetaliationRequestPage() {
+  const navigate = useNavigate()
   const { id } = useParams()
   // Retrieves the original support request using the ID in the current route.
   const originalRequest = id ? getSupportRequestById(id) : undefined
@@ -83,8 +85,6 @@ function RetaliationRequestPage() {
   const [draft, setDraft] =
     useState<RetaliationSupportRequestDraft>(initialDraft)
   const [error, setError] = useState('')
-  const [submittedRequest, setSubmittedRequest] =
-    useState<ReturnType<typeof createRetaliationSupportRequest>>()
 
   // Prevents missing requests or another retaliation report from being used as the original case.
   if (!originalRequest || originalRequest.type === 'retaliation') {
@@ -148,8 +148,11 @@ function RetaliationRequestPage() {
         draft,
       })
 
-      setSubmittedRequest(request)
       setError('')
+      navigate(
+        `/received/${request.id}?ref=${encodeURIComponent(request.reference)}&type=retaliation`,
+        { replace: true },
+      )
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -157,65 +160,6 @@ function RetaliationRequestPage() {
           : 'Your retaliation request could not be submitted.',
       )
     }
-  }
-
-  // Displays the confirmation and reference after a retaliation request is recorded.
-  if (submittedRequest) {
-    return (
-      <div className="request-page">
-        <div className="request-success">
-          <div className="success-icon">
-            <CheckCircle2 size={38} />
-          </div>
-          <div className="request-eyebrow">RETALIATION REPORT RECORDED</div>
-          <h1>Your retaliation support request has been recorded.</h1>
-          <p>
-            This is a separate support record linked to your original case.
-            Your original request and its status have not been changed.
-          </p>
-
-          <div className="reference-card">
-            <span>RETALIATION REFERENCE NUMBER</span>
-            <strong>{submittedRequest.reference}</strong>
-            <small>Keep this number for future reference.</small>
-          </div>
-
-          <div className="success-next-step">
-            <ShieldCheck size={19} />
-            <div>
-              <strong>Your handling preference</strong>
-              <p>
-                {submittedRequest.retaliationRoutePreference === 'internal'
-                  ? 'You indicated a preference for internal support. An appropriate conflict-free handling arrangement would need to be established.'
-                  : submittedRequest.retaliationRoutePreference === 'independent'
-                    ? 'You indicated a preference for independent support. An external provider has not yet been appointed in this demonstration.'
-                    : 'You asked for help deciding the safest handling route. The appropriate route would need to be discussed and agreed.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="prototype-notice">
-            <strong>Demonstration environment:</strong> This request exists
-            only in temporary application memory. No support team or external
-            provider has been notified. The prototype cannot enforce access
-            restrictions or guarantee protection from retaliation.
-          </div>
-
-          <Link
-            to={`/my-support/${submittedRequest.id}`}
-            className="request-primary-link"
-          >
-            View retaliation request <ArrowRight size={16} />
-          </Link>
-          <Link
-            to={`/my-support/${originalRequest.id}`}
-            className="request-secondary-link"
-          >
-            Return to original request
-          </Link>
-        </div>
-      </div>
-    )
   }
 
   return (

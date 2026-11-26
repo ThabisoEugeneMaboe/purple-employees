@@ -4,6 +4,23 @@ export type SupportRequestType =
   | 'workplace'
   | 'independent'
   | 'retaliation'
+  | 'iod'
+
+export type IodDocumentKind =
+  | 'j88'
+  | 'iod-claim'
+  | 'medical-certificate'
+  | 'incident-report'
+  | 'other'
+
+export interface SupportRequestAttachment {
+  id: string
+  name: string
+  size: number
+  mimeType: string
+  kind: IodDocumentKind
+  dataUrl: string
+}
 
 // Categories used to describe the type of independent support being requested.
 export type IndependentSupportCategory =
@@ -42,6 +59,13 @@ export interface SupportRequest {
   retaliationRoutePreference?: RetaliationRoutePreference
   independentSupportCategories?: IndependentSupportCategory[]
   independentSupportDetails?: string
+  iodIncidentDate?: string
+  iodIncidentTime?: string
+  iodLocation?: string
+  iodMedicalAttended?: boolean
+  iodStillAtWork?: boolean
+  iodDocumentKinds?: IodDocumentKind[]
+  attachments?: SupportRequestAttachment[]
   description: string
   preferredChannel: SupportChannel
   preferredLanguage: string
@@ -60,6 +84,13 @@ export interface SupportRequestDraft {
   retaliationRoutePreference?: RetaliationRoutePreference
   independentSupportCategories?: IndependentSupportCategory[]
   independentSupportDetails?: string
+  iodIncidentDate?: string
+  iodIncidentTime?: string
+  iodLocation?: string
+  iodMedicalAttended?: boolean
+  iodStillAtWork?: boolean
+  iodDocumentKinds?: IodDocumentKind[]
+  attachments?: SupportRequestAttachment[]
   description: string
   preferredChannel: SupportChannel
   preferredLanguage: string

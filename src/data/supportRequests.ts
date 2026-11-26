@@ -170,7 +170,11 @@ function getLatestAssignment(
 // Determines whether a request may enter the internal responder assignment process.
 // Retaliation requests qualify only when the employee selected the internal route.
 function isEligibleForInternalHandling(request: SupportRequest): boolean {
-  if (request.type === 'emotional' || request.type === 'workplace') {
+  if (
+    request.type === 'emotional' ||
+    request.type === 'workplace' ||
+    request.type === 'iod'
+  ) {
     return true
   }
 

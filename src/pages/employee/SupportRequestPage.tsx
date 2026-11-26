@@ -3,8 +3,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  CheckCircle2,
-  Clock,
   Heart,
   LockKeyhole,
   MessageCircle,
@@ -12,7 +10,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { submitSupportRequest } from '../../data/supportRequests'
 import type {
   IndependentSupportCategory,
@@ -44,6 +42,11 @@ const pathwayDetails: Record<
   retaliation: {
     title: 'Retaliation support',
     description: 'Seek support if you feel threatened, disadvantaged or treated unfairly for raising a concern or seeking support.',
+    icon: ShieldCheck,
+  },
+  iod: {
+    title: 'Injury on duty / J88',
+    description: 'Report a workplace injury and upload IOD or J88 documents.',
     icon: ShieldCheck,
   },
 }
@@ -110,6 +113,7 @@ function getPathwayType(value: string | undefined): SupportRequestType | null {
 }
 
 function SupportRequestPage() {
+  const navigate = useNavigate()
   const { type: routeType } = useParams()
   const requestType = getPathwayType(routeType)
 
@@ -120,7 +124,6 @@ function SupportRequestPage() {
     type: requestType ?? 'emotional',
   })
   const [error, setError] = useState('')
-  const [submittedReference, setSubmittedReference] = useState('')
 
   if (!requestType) {
     return (
@@ -190,56 +193,10 @@ function SupportRequestPage() {
     }
 
     const request = submitSupportRequest(draft)
-    setSubmittedReference(request.reference)
-    setStep(4)
     setError('')
-  }
-
-  // Shows the confirmation screen after the request has been submitted.
-  if (step === 4) {
-    return (
-      <div className="request-page">
-        <div className="request-success">
-          <div className="success-icon">
-            <CheckCircle2 size={38} />
-          </div>
-          <div className="request-eyebrow">REQUEST SUBMITTED</div>
-          <h1>Your request has been received.</h1>
-          <p>
-            Thank you for reaching out. Your demonstration request has been
-            recorded successfully.
-          </p>
-
-          <div className="reference-card">
-            <span>YOUR REFERENCE NUMBER</span>
-            <strong>{submittedReference}</strong>
-            <small>Keep this number for future reference.</small>
-          </div>
-
-          <div className="success-next-step">
-            <Clock size={19} />
-            <div>
-              <strong>What happens next?</strong>
-              <p>
-                In the completed platform, the appropriate support team will
-                receive your request and provide an acknowledgement and next steps.
-              </p>
-            </div>
-          </div>
-
-          <div className="prototype-notice">
-            <strong>Demonstration environment:</strong> This request exists only
-            in temporary application memory. No support team has been notified.
-          </div>
-
-          <Link to="/my-support" className="request-primary-link">
-            Continue to my support <ArrowRight size={16} />
-          </Link>
-          <Link to="/" className="request-secondary-link">
-            Return to home
-          </Link>
-        </div>
-      </div>
+    navigate(
+      `/received/${request.id}?ref=${encodeURIComponent(request.reference)}&type=${request.type}`,
+      { replace: true },
     )
   }
 
